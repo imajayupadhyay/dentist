@@ -1,0 +1,38 @@
+/* ═════════════════ GOOGLE REVIEWS ═════════════════ */
+.greviews{background:var(--paper)}
+.g-head{text-align:center;margin-bottom:clamp(26px,3.2vw,42px)}
+.g-head .eyebrow{margin-bottom:16px}
+.g-head h2{margin-inline:auto;max-width:15ch}
+
+.gsum{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:clamp(20px,3vw,46px);padding:clamp(22px,2.6vw,32px) clamp(24px,3vw,44px);
+  border-radius:var(--r-l);background:var(--cream);border:1px solid var(--line);
+  box-shadow:var(--sh-s);margin-bottom:clamp(26px,3.2vw,44px)}
+.gsum-brand{display:flex;align-items:center;gap:12px}
+.gsum-brand svg{width:30px;height:30px;flex:0 0 30px}
+.gsum-brand b{display:block;font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;
+  letter-spacing:-.02em;line-height:1.2}
+.gsum-brand span{display:block;font-size:12.5px;color:var(--muted)}
+.gsum-score{display:flex;align-items:center;gap:14px}
+.gsum-score .n{font-family:'Poppins',sans-serif;font-weight:700;font-size:clamp(34px,3.6vw,46px);
+  letter-spacing:-.032em;line-height:1;color:var(--brand)}
+.gsum-score small{display:block;font-size:12.5px;color:var(--muted);margin-top:4px}
+.gstars{display:flex;gap:3px}
+.gstars svg{width:16px;height:16px;fill:var(--gold)}
+.gsum .btn{margin-left:auto}
+
+.gcards{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(13px,1.5vw,20px)}
+.gcard{position:relative;padding:clamp(22px,2.2vw,28px);border-radius:var(--r-m);
+  background:var(--paper);border:1px solid var(--line);box-shadow:var(--sh-s);
+  display:flex;flex-direction:column;gap:14px;
+  transition:transform .45s var(--ease-o),box-shadow .45s var(--ease-o),border-color .4s}
+.gcard:hover{transform:translateY(-5px);box-shadow:var(--sh-m);border-color:transparent}
+.gcard-top{display:flex;align-items:center;gap:12px}
+.gcard-top img{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:0 0 44px}
+.gcard-top b{display:block;font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:-.02em}
+.gcard-top span{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+.gcard-top .gmark{margin-left:auto;width:20px;height:20px;flex:0 0 20px;opacity:.9}
+.gcard p{margin:0;font-size:14.8px;line-height:1.68;color:var(--ink-soft)}
+.gcard .gstars svg{width:15px;height:15px}
+

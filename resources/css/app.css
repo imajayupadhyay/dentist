@@ -1,0 +1,50 @@
+/* ============================================================================
+   Application stylesheet
+   ----------------------------------------------------------------------------
+   Import order is significant — it mirrors the order of the original design
+   document so the cascade is identical. Do not reorder. New page stylesheets
+   go above `responsive.css`, which must always stay last.
+
+   Tailwind: theme + utilities only. Preflight is intentionally NOT imported —
+   the design system below ships its own reset and sets every margin explicitly,
+   so Preflight would override it and cause visual drift. See workflow.md §5.2.
+   ========================================================================== */
+
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* ── design system ─────────────────────────────────────────────────────── */
+@import './design/tokens.css';
+@import './design/buttons.css';
+@import './design/header.css';
+@import './design/mobile-nav.css';
+
+/* ── Home page sections ────────────────────────────────────────────────── */
+@import './design/home/hero.css';
+@import './design/sections.css';
+@import './design/home/about.css';
+@import './design/home/treatments.css';
+@import './design/home/stories.css';
+@import './design/home/reviews.css';
+@import './design/home/contact.css';
+
+/* ── global chrome ─────────────────────────────────────────────────────── */
+@import './design/footer.css';
+
+/* ── About page sections ───────────────────────────────────────────────── */
+@import './design/about/about.css';
+
+/* ── Admin panel ───────────────────────────────────────────────────────── */
+@import './design/admin/admin.css';
+
+/* ── responsive overrides — MUST be last ───────────────────────────────── */
+@import './design/responsive.css';
+
+/* ── Tailwind content sources ──────────────────────────────────────────── */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.vue';

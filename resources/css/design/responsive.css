@@ -1,0 +1,61 @@
+/* ═════════════════ RESPONSIVE ═════════════════ */
+@media(max-width:1040px){
+  .nav-call{display:none}
+  .hero h1{max-width:17ch}
+  .intro-in{grid-template-columns:1fr;gap:22px}
+  .vwrap{--per:2}
+  .gcards{grid-template-columns:repeat(2,1fr)}
+  .c-grid{grid-template-columns:1fr}
+  .ft-top{grid-template-columns:1fr 1fr;gap:34px}
+  .map-card{min-height:360px}
+  .gsum{justify-content:flex-start}
+  .gsum .btn{margin-left:0}
+  .vnav.prev{left:-6px} .vnav.next{right:-6px}
+  .tband-in{grid-template-columns:1fr;min-height:0}
+  .tband-media,.tband.flip .tband-media{grid-area:1/1;min-height:clamp(260px,52vw,380px)}
+  .tband-body,.tband.flip .tband-body{grid-area:2/1}
+  .tband-media::after,.tband.flip .tband-media::after{
+    background:linear-gradient(to bottom,transparent 52%,var(--bg) 99%)}
+  .tband.flip .tband-body .inner{margin-left:0}
+}
+@media(max-width:860px){
+  .nav-links,.nav>.nav-in>.btn{display:none}
+  .burger{display:grid}
+  .sheet{width:100%}
+  .hero{padding-top:calc(104px + 2vh);min-height:min(820px,88svh);--hero-col:100%}
+  .hero-scrim{background:
+    linear-gradient(to top,rgba(14,14,24,.92) 0%,rgba(14,14,24,.68) 42%,rgba(14,14,24,.42) 100%)}
+  .intro-stats{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .trust .sep{display:none}
+  .trust{gap:18px 26px}
+  .hero-ctl{gap:14px}
+  .arrows button{width:44px;height:44px}
+  .dots{min-width:0}
+  .dot{font-size:11.5px;flex:1;max-width:none}
+  .hero{min-height:0;padding-bottom:34px}
+  .trust{gap:16px 24px}
+  .dot span{display:none}
+  .vwrap{--per:1.12}
+  .gcards{grid-template-columns:1fr}
+  .f2{grid-template-columns:1fr}
+  .ft-top{grid-template-columns:1fr}
+  .ft-cta{flex-direction:column;align-items:flex-start}
+  .ft-cta .btn{margin-left:0;width:100%}
+  .ft-bot{justify-content:flex-start}
+  .map-card{min-height:300px}
+  .cform-foot .btn{width:100%}
+  .gsum{flex-direction:column;align-items:flex-start;gap:18px}
+  .gsum .btn{width:100%}
+  .vnav{display:none}
+  .vplay{width:56px;height:56px}
+  .tnum{width:34px;height:34px;font-size:12px;margin-bottom:16px}
+  .tdesc .ticon{flex:0 0 38px;width:38px;height:38px;border-radius:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .hero-copy .slide>*{opacity:1;transform:none}
+  .dot.on i{width:100%}
+}

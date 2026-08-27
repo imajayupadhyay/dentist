@@ -1,0 +1,17 @@
+/* ═════════════════ BUTTONS ═════════════════ */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:15px 27px;border-radius:100px;font-weight:600;font-size:14.5px;letter-spacing:-.005em;
+  overflow:hidden;isolation:isolate;white-space:nowrap;
+  transition:transform .4s var(--ease),box-shadow .4s var(--ease),color .35s}
+.btn svg{width:15px;height:15px;flex:0 0 15px;transition:transform .4s var(--ease)}
+.btn:hover svg{transform:translateX(4px)}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;
+  transform:translateY(101%);transition:transform .5s var(--ease-o)}
+.btn:hover::before{transform:translateY(0)}
+.btn-brand{background:var(--brand);color:#fff;box-shadow:var(--sh-brand)}
+.btn-brand::before{background:var(--ink)}
+.btn-brand:hover{transform:translateY(-3px)}
+.btn-ghost{background:var(--paper);color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost::before{background:var(--ink)}
+.btn-ghost:hover{color:#fff;border-color:var(--ink);transform:translateY(-3px)}
+

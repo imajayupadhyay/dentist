@@ -1,0 +1,60 @@
+/* ═══════════ MOBILE NAV — full-screen drawer ═══════════
+   NOT from the source document. This is a deliberate, user-requested redesign
+   replacing the original `.sheet` dropdown. See workflow.md §6.
+
+   The drawer is a sibling of `.nav`, never a child of `.nav-in` — `.nav-in`
+   carries `backdrop-filter`, which makes it a containing block for fixed-position
+   descendants and would trap the panel inside the pill.
+
+   It sits at z-index 190, just under the nav's 200, so the floating pill stays
+   above it and the burger's existing X morph doubles as the close control. */
+
+.mnav{position:fixed;inset:0;z-index:190;
+  display:flex;flex-direction:column;
+  background:var(--ink);
+  padding:calc(100px + env(safe-area-inset-top,0px)) var(--pad)
+          calc(30px + env(safe-area-inset-bottom,0px));
+  overflow-y:auto;overscroll-behavior:contain;
+  transform:translateX(100%);visibility:hidden;
+  transition:transform .52s var(--ease-o),visibility 0s linear .52s}
+.mnav.open{transform:translateX(0);visibility:visible;
+  transition:transform .52s var(--ease-o),visibility 0s}
+
+/* warm brand glow bleeding in from the corner the panel enters from */
+.mnav::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(125% 62% at 100% 0%,rgba(255,31,78,.30),transparent 62%)}
+.mnav>*{position:relative;z-index:1}
+
+.mnav-links{display:flex;flex-direction:column}
+.mnav-links a{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:clamp(14px,2.6vw,20px) 2px;color:#fff;
+  font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-.028em;line-height:1.08;
+  font-size:clamp(27px,7.6vw,40px);
+  border-bottom:1px solid rgba(255,255,255,.12);
+  opacity:0;transform:translateX(30px);
+  transition:opacity .5s var(--ease-o),transform .5s var(--ease-o),color .3s}
+.mnav.open .mnav-links a{opacity:1;transform:none;
+  transition-delay:calc(.14s + var(--i) * .06s)}
+.mnav-links a svg{width:19px;height:19px;flex:0 0 19px;stroke:var(--brand);fill:none;
+  stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .35s var(--ease)}
+.mnav-links a:hover{color:var(--gold)}
+.mnav-links a:hover svg{transform:translateX(6px);stroke:var(--gold)}
+
+.mnav-foot{margin-top:auto;padding-top:clamp(24px,4vw,36px);display:grid;gap:15px;
+  opacity:0;transform:translateY(18px);
+  transition:opacity .5s var(--ease-o) .42s,transform .5s var(--ease-o) .42s}
+.mnav.open .mnav-foot{opacity:1;transform:none}
+.mnav-call{display:inline-flex;align-items:center;gap:12px;color:#fff;
+  font-size:16.5px;font-weight:600;letter-spacing:-.01em}
+.mnav-call svg{width:18px;height:18px;flex:0 0 18px;stroke:var(--brand);fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mnav-call:hover{color:var(--gold)}
+.mnav-foot .btn{width:100%}
+.mnav-meta{margin:0;font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.46)}
+
+/* the page must not scroll behind the open drawer */
+body.mnav-lock{overflow:hidden}
+
+/* desktop never sees it, even if the viewport is resized while open */
+@media(min-width:861px){.mnav{display:none}}

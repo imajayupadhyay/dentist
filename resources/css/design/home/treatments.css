@@ -1,0 +1,48 @@
+/* ═════════════════ TREATMENTS ═════════════════ */
+/* Every treatment is a full-bleed band that owns its own colour scheme.
+   Each band sets --bg / --fg / --sub / --accent once; all the rules below read those,
+   so recolouring a treatment is a one-line change on the <article>. */
+.tband{position:relative;background:var(--bg);color:var(--fg);overflow:hidden}
+.tband-in{display:grid;grid-template-columns:1fr 1fr;align-items:center;
+  min-height:clamp(390px,44vw,530px)}
+
+.tband-media{position:relative;align-self:stretch;min-height:280px;grid-area:1/1}
+.tband-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* fades the photo into the band colour instead of ending on a hard edge */
+.tband-media::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(to right,transparent 48%,var(--bg) 99%)}
+
+.tband-body{grid-area:1/2;position:relative;z-index:2;
+  padding:clamp(40px,5vw,78px) clamp(22px,5vw,86px)}
+.tband-body .inner{max-width:560px}
+
+.tband.flip .tband-media{grid-area:1/2}
+.tband.flip .tband-body{grid-area:1/1}
+.tband.flip .tband-media::after{background:linear-gradient(to left,transparent 48%,var(--bg) 99%)}
+.tband.flip .tband-body .inner{margin-left:auto}
+
+.tnum{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;
+  border:1.5px solid currentColor;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;
+  opacity:.55;margin-bottom:22px}
+.tband h3{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-.028em;line-height:1;
+  font-size:clamp(32px,4.6vw,64px);margin:0;color:var(--fg)}
+.tsub{margin:14px 0 0;font-size:clamp(12px,1.05vw,13.5px);font-weight:700;letter-spacing:.19em;
+  text-transform:uppercase;color:var(--accent)}
+.tdesc{display:flex;gap:16px;align-items:flex-start;margin-top:26px}
+.tdesc .ticon{flex:0 0 44px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  background:color-mix(in srgb, var(--fg) 12%, transparent)}
+.tdesc .ticon svg{width:21px;height:21px;fill:none;stroke:var(--fg);stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.tdesc p{margin:0;font-size:15.5px;line-height:1.65;color:var(--sub)}
+
+.tmore{display:inline-flex;align-items:center;gap:11px;margin-top:30px;padding-bottom:6px;
+  position:relative;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.tmore::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.5px;
+  background:currentColor;transform:scaleX(0);transform-origin:right;
+  transition:transform .5s var(--ease-o)}
+.tmore:hover::after{transform:scaleX(1);transform-origin:left}
+.tmore svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease)}
+.tmore:hover svg{transform:translateX(5px)}
+

@@ -1,0 +1,17 @@
+/* ═════════════════ INTRO (compact) ═════════════════ */
+.intro{background:var(--paper);padding-block:clamp(44px,5.2vw,78px)}
+.intro-in{display:grid;grid-template-columns:.92fr 1.08fr;gap:clamp(22px,3.6vw,60px);
+  align-items:center}
+.intro h2{font-size:clamp(25px,3vw,42px);margin:14px 0 0;max-width:14ch}
+.intro p{margin:0;font-size:clamp(15.5px,1.15vw,17.5px);line-height:1.72;color:var(--ink-soft);
+  max-width:52ch}
+.intro .btn{margin-top:20px}
+.intro-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  margin-top:clamp(28px,3.4vw,46px);background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.intro-stats div{background:var(--paper);padding:clamp(16px,1.8vw,24px) clamp(12px,1.6vw,20px);
+  text-align:center}
+.intro-stats b{display:block;font-family:'Poppins',sans-serif;font-weight:700;
+  font-size:clamp(24px,2.6vw,34px);letter-spacing:-.032em;line-height:1;color:var(--brand)}
+.intro-stats span{display:block;margin-top:6px;font-size:12px;font-weight:500;color:var(--muted)}
+

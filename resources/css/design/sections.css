@@ -1,0 +1,9 @@
+/* ═════════════════ SECTION BASE ═════════════════ */
+.sec{position:relative;padding-block:clamp(62px,7.6vw,118px)}
+h2.dis{font-size:clamp(29px,4.1vw,56px)}
+.lede{font-size:clamp(15.5px,1.15vw,17.5px);line-height:1.72;color:var(--ink-soft);
+  max-width:52ch;margin:18px 0 0}
+[data-rv]{opacity:0;transform:translateY(26px);
+  transition:opacity .8s var(--ease-o) var(--d,0s),transform .8s var(--ease-o) var(--d,0s)}
+[data-rv].in{opacity:1;transform:none}
+
