@@ -1,17 +1,26 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useScrollReveal } from '@/Composables/useScrollReveal';
+
+const props = defineProps({
+    figures: {
+        type: Array,
+        default: () => [],
+    },
+});
 
 const root = ref(null);
 
 useScrollReveal(root);
 
-const figures = [
+const fallbackFigures = [
     { count: '16', suffix: '', value: '16', label: 'Years in practice' },
     { count: '12400', suffix: '+', value: '12,400+', label: 'Treatments done' },
     { count: '4.9', decimals: '1', suffix: '★', value: '4.9★', label: '860 reviews' },
     { count: '90', suffix: ' min', value: '90 min', label: 'Per appointment' },
 ];
+
+const visibleFigures = computed(() => props.figures?.length ? props.figures : fallbackFigures);
 
 let observer = null;
 let running = true;
@@ -121,11 +130,12 @@ onBeforeUnmount(() => {
     <section class="ab-figures" aria-label="The clinic in numbers" ref="root">
         <div class="wrap">
             <div class="ab-figures-grid" data-rv>
-                <div v-for="figure in figures" :key="figure.label">
+                <div v-for="figure in visibleFigures" :key="figure.label">
                     <b
                         :data-count="figure.count"
                         :data-decimals="figure.decimals ?? null"
                         :data-suffix="figure.suffix"
+                        :data-prefix="figure.prefix"
                     >{{ figure.value }}</b><span>{{ figure.label }}</span>
                 </div>
             </div>

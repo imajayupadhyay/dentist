@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
+import RichText from '@/Components/Global/RichText.vue';
 import AccentHeading from './AccentHeading.vue';
-import RichText from './RichText.vue';
 
 defineProps({
     treatment: {

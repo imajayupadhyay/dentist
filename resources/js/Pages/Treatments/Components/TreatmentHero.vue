@@ -1,7 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import RichText from '@/Components/Global/RichText.vue';
 import AccentHeading from './AccentHeading.vue';
-import RichText from './RichText.vue';
 
 defineProps({
     treatment: {

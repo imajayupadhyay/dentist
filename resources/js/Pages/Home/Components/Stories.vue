@@ -1,18 +1,38 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useScrollReveal } from '@/Composables/useScrollReveal';
+
+const props = defineProps({
+    content: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
 const root = ref(null);
 const rail = ref(null);
 
 useScrollReveal(root);
 
-const stories = [
-    { src: '/assets/video/story-1.mp4', poster: '/assets/portrait-warm.jpg', name: 'Priya Nair' },
-    { src: '/assets/video/story-2.mp4', poster: '/assets/bw-smile.jpg', name: 'Rakesh Menon' },
-    { src: '/assets/video/story-3.mp4', poster: '/assets/whitening.jpg', name: 'Meera Iyer' },
-    { src: '/assets/video/story-4.mp4', poster: '/assets/hero-smile.jpg', name: 'Anand Sharma' },
+const fallbackContent = {
+    eyebrow: 'Patient stories',
+    heading: 'Real stories, ',
+    heading_accent: 'real smiles.',
+};
+
+const fallbackStories = [
+    { src: '/assets/video/story-1.mp4', poster: '/assets/portrait-warm.jpg', name: 'Priya Nair', tag: 'Sample' },
+    { src: '/assets/video/story-2.mp4', poster: '/assets/bw-smile.jpg', name: 'Rakesh Menon', tag: 'Sample' },
+    { src: '/assets/video/story-3.mp4', poster: '/assets/whitening.jpg', name: 'Meera Iyer', tag: 'Sample' },
+    { src: '/assets/video/story-4.mp4', poster: '/assets/hero-smile.jpg', name: 'Anand Sharma', tag: 'Sample' },
 ];
+
+const pageContent = computed(() => ({
+    ...fallbackContent,
+    ...(props.content || {}),
+}));
+
+const stories = computed(() => props.content?.items?.length ? props.content.items : fallbackStories);
 
 const videos = ref([]);
 const playing = ref(null);
@@ -137,8 +157,10 @@ onBeforeUnmount(() => {
     <section class="sec stories" id="stories" ref="root">
         <div class="wrap">
             <div class="stories-head">
-                <span class="eyebrow" data-rv>Patient stories</span>
-                <h2 class="dis" data-rv style="--d:.06s">Real stories, <em>real smiles.</em></h2>
+                <span class="eyebrow" data-rv>{{ pageContent.eyebrow }}</span>
+                <h2 class="dis" data-rv style="--d:.06s">
+                    {{ pageContent.heading }}<em v-if="pageContent.heading_accent">{{ pageContent.heading_accent }}</em>
+                </h2>
             </div>
 
             <div class="vwrap" data-rv style="--d:.12s">
@@ -154,7 +176,7 @@ onBeforeUnmount(() => {
                 <div class="vrail" ref="rail" @scroll.passive="sync">
                     <article
                         v-for="(story, index) in stories"
-                        :key="story.src"
+                        :key="`${story.src}-${index}`"
                         class="vcard"
                         :class="{ playing: playing === index }"
                     >
@@ -168,7 +190,7 @@ onBeforeUnmount(() => {
                                 muted
                                 @ended="onEnded(index)"
                             ></video>
-                            <span class="vtag">Sample</span>
+                            <span v-if="story.tag" class="vtag">{{ story.tag }}</span>
                             <button
                                 class="vover"
                                 :aria-label="`Play ${story.name}'s story`"

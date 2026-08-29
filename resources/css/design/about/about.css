@@ -321,3 +321,12 @@
 @media(prefers-reduced-motion:reduce){
   .ab-shot.lead,.ab-shot.inset{transform:none!important}
 }
+
+/* ============================================================================
+   Non-source addition: CMS rich text inside dynamic About page copy.
+   ========================================================================== */
+.ab-head .lede.ab-rich>p,.ab-hero .lede.ab-rich>p{margin:0}
+.ab-rich ul,.ab-rich ol{margin:12px 0 0;padding-left:22px}
+.ab-rich li+li{margin-top:6px}
+.ab-rich a{text-decoration:underline;text-underline-offset:4px}
+.ab-rich mark{background:var(--gold);color:inherit;border-radius:4px;padding:0 .08em}

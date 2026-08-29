@@ -15,3 +15,14 @@
   font-size:clamp(24px,2.6vw,34px);letter-spacing:-.032em;line-height:1;color:var(--brand)}
 .intro-stats span{display:block;margin-top:6px;font-size:12px;font-weight:500;color:var(--muted)}
 
+/* ============================================================================
+   Non-source addition: CMS rich text inside dynamic intro copy.
+   ========================================================================== */
+.intro .home-rich p+ p{margin-top:12px}
+.intro .home-rich ul,.intro .home-rich ol{
+  margin:12px 0 0;padding-left:22px;font-size:clamp(15.5px,1.15vw,17.5px);
+  line-height:1.72;color:var(--ink-soft);max-width:52ch
+}
+.intro .home-rich li+li{margin-top:6px}
+.intro .home-rich a{color:var(--brand-d);text-decoration:underline;text-underline-offset:4px}
+.intro .home-rich mark{background:var(--gold);color:inherit;border-radius:4px;padding:0 .08em}

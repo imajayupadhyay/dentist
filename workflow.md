@@ -43,7 +43,7 @@ return `Inertia::render()` and Vue components receive props directly.
 
 **The one exception — explicit user requests.** When the user asks for a change to the
 design, build it. "Match the source" governs the *conversion*, not the project forever.
-Three such changes already exist (§6). When one happens:
+Recorded departures already exist (§6). When one happens:
 
 1. Never edit a verbatim file to do it. Put new rules in a clearly-named non-source
    stylesheet (e.g. `design/mobile-nav.css`) or a bannered block at the end of an
@@ -89,7 +89,8 @@ resources/
     ├── Components/
     │   └── Global/                 ← shared across every page
     │       ├── Header.vue
-    │       └── Footer.vue
+    │       ├── Footer.vue
+    │       └── RichText.vue         ← safe display helper for admin-authored rich text
     │
     ├── Composables/                ← shared reusable logic
     │   └── useScrollReveal.js
@@ -120,7 +121,6 @@ resources/
         │   ├── Show.vue            ← dynamic treatment detail page
         │   └── Components/         ← treatment-detail-only sections
         │       ├── AccentHeading.vue
-        │       ├── RichText.vue
         │       ├── TreatmentHero.vue
         │       ├── TreatmentSectionNav.vue
         │       ├── TreatmentOverview.vue
@@ -133,6 +133,12 @@ resources/
             ├── Auth/
             │   └── Login.vue
             ├── Dashboard/
+            │   └── Index.vue
+            ├── Home/
+            │   └── Form.vue
+            ├── About/
+            │   └── Form.vue
+            ├── Contacts/
             │   └── Index.vue
             ├── Treatments/
             │   ├── Index.vue
@@ -197,14 +203,15 @@ resources/
 - **Do not introduce new frameworks, UI kits, state managers or dependencies**
   without a clear need. No Vuex/Pinia, no component library, no jQuery.
 
-### 2.6 Frontend-only scope (public site)
+### 2.6 Frontend/backend scope
 
 - Implement the **frontend only**.
 - Do **not** modify controllers, models, migrations, database schema, APIs or auth
   unless explicitly asked.
 - Routes may be added only where needed to render a page.
-- The appointment form is **front-end only** — it validates and shows a success state
-  in the browser and submits nothing. Wiring it to the backend is future work (§7).
+- The homepage appointment form is the current explicit exception: it posts through
+  Inertia to `/contact-submissions`, stores rows in `contact_submissions`, and admins
+  manage follow-up in `/admin/contacts`.
 
 ### 2.7 Workflow maintenance (this file)
 
@@ -235,6 +242,7 @@ Pages/
 └── Admin/
     ├── Auth/       { Login.vue }
     ├── Dashboard/  { Index.vue }
+    ├── Contacts/   { Index.vue }
     ├── Treatments/ { Index.vue, Form.vue }
     └── Components/ { AdminShell.vue, Sidebar.vue, Topbar.vue }
 ```
@@ -249,12 +257,20 @@ Page-specific components never mix between pages.
 
 | File | Role |
 |---|---|
-| `routes/web.php` | `/` → `HomeController`; `/about-us` → `Inertia::render('About/Index')`; `/treatments/{treatment}` → dynamic treatment detail page |
-| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/treatments`, `/admin/logout` |
-| `app/Http/Controllers/HomeController.php` | Loads active treatments for the homepage treatment bands |
+| `routes/web.php` | `/` → `HomeController`; `POST /contact-submissions` → homepage appointment storage; `/about-us` → `AboutController`; `/treatments/{treatment}` → dynamic treatment detail page |
+| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/home`, `/admin/about`, `/admin/contacts`, `/admin/treatments`, `/admin/logout` |
+| `app/Http/Controllers/HomeController.php` | Loads singleton `HomePage` content/SEO plus active treatments for the homepage |
+| `app/Http/Controllers/ContactSubmissionController.php` | Stores homepage appointment form submissions in `contact_submissions` |
+| `app/Http/Controllers/AboutController.php` | Loads singleton `AboutPage` content/SEO for the About Us page |
 | `app/Http/Controllers/TreatmentController.php` | Public treatment detail page by slug; hides inactive treatments |
+| `app/Http/Controllers/Admin/HomePageController.php` | Admin singleton editor for homepage SEO and non-treatment/non-review content |
+| `app/Http/Controllers/Admin/AboutPageController.php` | Admin singleton editor for About page SEO and section content |
+| `app/Http/Controllers/Admin/ContactSubmissionController.php` | Admin inbox for viewing homepage appointment requests and updating status/notes |
 | `app/Http/Controllers/Admin/TreatmentController.php` | Admin CRUD for treatments, including optional public asset image uploads |
 | `app/Http/Controllers/Admin/Auth/LoginController.php` | Admin login/logout, validation, throttling, session regeneration |
+| `app/Http/Requests/ContactSubmissionRequest.php` | Public homepage appointment validation and input cleanup |
+| `app/Http/Requests/Admin/HomePageRequest.php` | Admin homepage validation, rich-text sanitizing and repeat-row cleanup |
+| `app/Http/Requests/Admin/AboutPageRequest.php` | Admin About page validation, rich-text sanitizing and repeat-row cleanup |
 | `app/Http/Requests/Admin/TreatmentRequest.php` | Admin treatment validation and repeat-row cleanup |
 | `app/Support/RichTextSanitizer.php` | Allowlist sanitizer for admin-authored treatment rich text |
 | `app/Http/Middleware/EnsureAdmin.php` | Blocks non-admin authenticated users from admin routes |
@@ -263,8 +279,17 @@ Page-specific components never mix between pages.
 | `database/migrations/2026_08_27_180000_add_is_admin_to_users_table.php` | Adds the `users.is_admin` admin gate |
 | `database/migrations/2026_08_29_090000_create_treatments_table.php` | Adds dynamic treatment homepage/detail content |
 | `database/migrations/2026_08_29_101000_add_advanced_seo_fields_to_treatments_table.php` | Adds advanced treatment SEO fields for canonical, robots, social sharing and schema metadata |
+| `database/migrations/2026_08_29_120000_create_home_pages_table.php` | Adds singleton homepage CMS content and SEO fields |
+| `database/migrations/2026_08_29_130000_create_about_pages_table.php` | Adds singleton About page CMS content and SEO fields |
+| `database/migrations/2026_08_29_140000_create_contact_submissions_table.php` | Adds stored homepage appointment/contact submissions |
+| `database/migrations/2026_08_29_141000_add_contact_form_fields_to_home_pages_table.php` | Adds admin-editable homepage contact form copy/options to `home_pages` |
+| `database/seeders/HomePageSeeder.php` | Seeds the original static homepage content into `home_pages` |
+| `database/seeders/AboutPageSeeder.php` | Seeds the original static About page content into `about_pages` |
 | `database/seeders/TreatmentSeeder.php` | Seeds the six original homepage treatments and starter detail-page content |
-| `database/seeders/DatabaseSeeder.php` | Calls `TreatmentSeeder` |
+| `database/seeders/DatabaseSeeder.php` | Calls `HomePageSeeder`, `AboutPageSeeder` and `TreatmentSeeder` |
+| `app/Models/HomePage.php` | Singleton homepage defaults, casts, admin/public serialization and SEO metadata |
+| `app/Models/AboutPage.php` | Singleton About page defaults, casts, admin/public serialization and SEO metadata |
+| `app/Models/ContactSubmission.php` | Stored contact/appointment request data, status options and admin serialization |
 | `app/Models/Treatment.php` | Treatment casts, tone map, public/admin serialization helpers, slug route binding |
 | `app/Models/User.php` | Casts `is_admin` to boolean; password remains hashed |
 | `resources/views/app.blade.php` | Root template (`@inertia`, `@inertiaHead`, `@vite`) |
@@ -279,6 +304,9 @@ Images and video from the source HTML live in `public/assets/`.
 Referenced from Vue as absolute paths: `/assets/hero-smile.jpg`.
 They are **not** imported through Vite — they are static files served from `public/`,
 which keeps the markup identical to the source HTML.
+Admin-uploaded homepage assets are stored in `public/assets/home/`; About page uploads
+are stored in `public/assets/about/`; treatment uploads are stored in
+`public/assets/treatments/`. All are saved as public `/assets/...` paths.
 
 ---
 
@@ -290,15 +318,22 @@ which keeps the markup identical to the source HTML.
 
 | # | Component | Anchor | Notes |
 |---|---|---|---|
-| 1 | `Hero.vue` | `#hero` | 3-slide carousel: autoplay 6.5s, dots w/ progress fill, arrows, swipe, arrow keys, pause on hover |
-| 2 | `About.vue` | `#about` | Intro copy + 4 stat tiles |
+| 1 | `Hero.vue` | `#hero` | CMS-driven slides and trust metrics from `HomePage`; carousel keeps autoplay 6.5s, dots w/ progress fill, arrows, swipe, arrow keys, pause on hover |
+| 2 | `About.vue` | `#about` | CMS-driven intro copy, CTA and stat tiles from `HomePage` |
 | 3 | `Treatments.vue` | `#treatments` | Full-bleed colour bands, alternating `.flip`, driven by active `Treatment` records from the database; each band links to `/treatments/{slug}` |
-| 4 | `Stories.vue` | `#stories` | Horizontal video rail, one clip plays at a time, pauses when scrolled away |
+| 4 | `Stories.vue` | `#stories` | CMS-driven heading and video/poster rows from `HomePage`; one clip plays at a time and pauses when scrolled away |
 | 5 | `Reviews.vue` | `#reviews` | Google rating summary + 6 review cards |
-| 6 | `Contact.vue` | `#contact` | Map iframe + appointment form (front-end validation only) |
+| 6 | `Contact.vue` | `#contact` | CMS-driven heading, map iframe, form copy and dropdown options; posts appointment requests to `/contact-submissions` |
 
 Header and footer come from `AppLayout.vue`. `Header.vue` also renders the
 full-screen mobile drawer (§5.8) as its second root node.
+
+Home page SEO is generated from the singleton `HomePage` record. The public route
+passes the backend SEO payload into Blade for crawlers/social scrapers, and
+`Pages/Home/Index.vue` uses the same payload inside Inertia `<Head>` for client-side
+navigation. The homepage Admin editor deliberately excludes Treatments, Reviews,
+Header and Footer because those are managed separately; contact form copy/options
+are now part of the Home content tab.
 
 ### About Us page
 
@@ -306,16 +341,23 @@ full-screen mobile drawer (§5.8) as its second root node.
 
 | # | Component | Anchor | Notes |
 |---|---|---|---|
-| 1 | `Masthead.vue` | `#ab-hero` | Editorial hero, image stack, 5-star proof chip, desktop-only parallax from `about.js` ported with cleanup |
-| 2 | `Figures.vue` | — | Four-stat hairline strip, count-up animation on reveal |
-| 3 | `FoundersNote.vue` | `#note` | Full-bleed founder's note band |
-| 4 | `Values.vue` | `#values` | Four operating principles rendered from a data array |
-| 5 | `Team.vue` | `#team` | Lead team image, clinician roster, certification chips |
-| 6 | `Cta.vue` | — | Brand CTA band above the global footer |
+| 1 | `Masthead.vue` | `#ab-hero` | CMS-driven editorial hero, image stack, proof chip, CTA buttons and meta items; desktop-only parallax from `about.js` ported with cleanup |
+| 2 | `Figures.vue` | — | CMS-driven hairline stat strip with count-up animation on reveal |
+| 3 | `FoundersNote.vue` | `#note` | CMS-driven full-bleed founder's note band |
+| 4 | `Values.vue` | `#values` | CMS-driven operating principles rendered from repeat rows |
+| 5 | `Team.vue` | `#team` | CMS-driven lead team image, clinician roster and certification chips |
+| 6 | `Cta.vue` | — | CMS-driven brand CTA band above the global footer |
 
 About page CSS lives in `resources/css/design/about/about.css`. It is copied
-byte-for-byte from `/Users/ajayupadhyay/Desktop/Dentist/drpuspa/assets/css/about.css`
-and imported after the shared footer styles, before the final global `responsive.css`.
+from `/Users/ajayupadhyay/Desktop/Dentist/drpuspa/assets/css/about.css`, then a
+clearly bannered non-source rich-text block was appended for admin-authored
+paragraph/list/link formatting. It is imported after the shared footer styles,
+before the final global `responsive.css`.
+
+About page SEO is generated from the singleton `AboutPage` record. The public route
+passes the backend SEO payload into Blade for crawlers/social scrapers, and
+`Pages/About/Index.vue` uses the same payload inside Inertia `<Head>` for
+client-side navigation.
 
 ### Treatment detail pages
 
@@ -353,6 +395,9 @@ FAQ schema when FAQs exist).
 |---|---|---|---|
 | Login | `/drpushpa-secure-login` | `Admin/Auth/Login.vue` | Title: `Doctor Pushpa - Secure Login`; posts to `/drpushpa-secure-login` |
 | Dashboard | `/admin/dashboard` | `Admin/Dashboard/Index.vue` | Basic dashboard only; wrapped in `AdminShell` |
+| Home | `/admin/home` | `Admin/Home/Form.vue` | Singleton homepage editor with SEO and Content tabs; manages hero, about, stories, contact-map and contact-form content |
+| About | `/admin/about` | `Admin/About/Form.vue` | Singleton About page editor with SEO and Content tabs; manages masthead, figures, founder note, values, team and CTA |
+| Contacts | `/admin/contacts` | `Admin/Contacts/Index.vue` | Admin inbox for homepage appointment requests, with status and notes controls |
 | Treatments list | `/admin/treatments` | `Admin/Treatments/Index.vue` | Lists treatments with visible/hidden state, public view, edit and delete actions |
 | Treatment create | `/admin/treatments/create` | `Admin/Treatments/Form.vue` | Tabbed editor: SEO, Home and Content; SEO tab has search, crawl, social and schema sections; long detail copy uses `RichTextEditor` |
 | Treatment edit | `/admin/treatments/{slug}/edit` | `Admin/Treatments/Form.vue` | Same tabbed editor as create; supports optional content/social image uploads to `public/assets/treatments/` and WYSIWYG rich text |
@@ -362,7 +407,7 @@ Admin chrome:
 | Component | Role |
 |---|---|
 | `Admin/Components/AdminShell.vue` | Composes sidebar, topbar and page slot |
-| `Admin/Components/RichTextEditor.vue` | Small allowlisted WYSIWYG editor for treatment paragraph fields |
+| `Admin/Components/RichTextEditor.vue` | Small allowlisted WYSIWYG editor for CMS paragraph fields |
 | `Admin/Components/Sidebar.vue` | Reusable admin navigation |
 | `Admin/Components/Topbar.vue` | Reusable page topbar and logout action |
 
@@ -445,12 +490,13 @@ user was hashed before storage; do not record plaintext credentials in this file
    `Pages/About.vue` scaffold pages were removed — superseded by `Pages/Home/Index.vue`.
 
 10. **About Us page added from `about.html`.**
-    Route: `/about-us` → `Inertia::render('About/Index')`. The HTML sections were
-    converted into page-scoped Vue components under `Pages/About/Components/`.
-    The supplied page stylesheet is preserved verbatim as `design/about/about.css`;
+    Route: `/about-us` → `AboutController`. The HTML sections were converted into
+    page-scoped Vue components under `Pages/About/Components/`. The supplied page
+    stylesheet is preserved as source CSS in `design/about/about.css`, with only
+    the bannered rich-text additions listed in §6 appended after the source rules;
     behaviour from `about.js` was ported to Vue with `refs`,
     `onMounted`/`onBeforeUnmount`, and no leaked listeners. The About page uses
-    `<Head>` for its title and meta description.
+    admin-managed `<Head>` metadata from `AboutPage`.
 
 11. **Global navigation now spans pages.**
     The header's requested **About Us** item routes to `/about-us`. Home-section
@@ -500,17 +546,18 @@ user was hashed before storage; do not record plaintext credentials in this file
     `Footer.vue` uses those links when available and falls back to the original
     static homepage anchors if the table is unavailable during setup.
 
-17. **Treatment paragraph fields support WYSIWYG editing.**
+17. **CMS paragraph fields support WYSIWYG editing.**
     `Admin/Components/RichTextEditor.vue` is a small project-local editor using
     `contenteditable` and browser editing commands. It supports bold, italic,
     highlight, bulleted lists, numbered lists, line breaks, links and clear
-    formatting. It is used only for long treatment detail fields: hero summary,
-    section ledes, overview body, step bodies, FAQ answers and CTA body.
-    `TreatmentRequest` sanitizes those fields before validation/storage through
+    formatting. It is used for long treatment detail fields and homepage paragraph
+    fields such as hero slide copy, homepage/About ledes, founder notes, value-card
+    copy and CTA bodies. `TreatmentRequest`, `HomePageRequest` and
+    `AboutPageRequest` sanitize those fields before validation/storage through
     `RichTextSanitizer`, which allows only `p`, `br`, `strong`, `em`, `i`, `mark`,
-    `ul`, `ol`, `li` and safe `a` links. Public treatment components render those
-    fields through `Treatments/Components/RichText.vue`; legacy plain text is
-    converted to paragraphs for display.
+    `ul`, `ol`, `li` and safe `a` links. Public pages render those fields through
+    `Components/Global/RichText.vue`; legacy plain text is converted to paragraphs
+    for display.
 
 18. **Admin treatment editing is split into tabs.**
     `Admin/Treatments/Form.vue` now presents three horizontal tabs: SEO, Home and
@@ -529,12 +576,54 @@ user was hashed before storage; do not record plaintext credentials in this file
     still updates the document head on the client. Server-rendered SEO tags are
     marked `data-server-seo` and removed after hydration to avoid duplicate tags.
 
+20. **Homepage content is CMS-backed through a singleton record.**
+    `home_pages` stores one row keyed `home`. `HomePage::defaultAttributes()` and
+    `HomePageSeeder` seed the current static source content so the public page does
+    not visually change after migration. `Admin/Home/Form.vue` edits the user-
+    requested areas: Hero slides/trust metrics, About intro/CTA/stats, Patient
+    Stories heading/video/poster rows, Contact heading/map iframe, and homepage
+    appointment form copy/options. Treatments, Reviews, Header and Footer are
+    intentionally excluded because they already are, or will be, managed by separate
+    systems. Admin uploads for these homepage sections are stored under
+    `public/assets/home/`.
+
+21. **Homepage SEO is editable and rendered server-side.**
+    The Home admin page has a separate SEO tab with search basics, robots controls,
+    Open Graph/Twitter fields and clinic schema controls. `HomePage::toSeoMeta()`
+    feeds both `HomeController::withViewData()` for initial Blade output and
+    `Pages/Home/Index.vue` for Inertia `<Head>`, matching the treatment SEO path.
+
+22. **About page content is CMS-backed through a singleton record.**
+    `about_pages` stores one row keyed `about`. `AboutPage::defaultAttributes()`
+    and `AboutPageSeeder` seed the current static About page content so the public
+    page does not visually change after migration. `Admin/About/Form.vue` edits
+    every visible About page section: Masthead, Figures, Founder's Note, Values,
+    Team and CTA. The editor uses separate heading-before/highlight/heading-after
+    fields where the source markup has text after `<em>`, so admins can change copy
+    without losing the original highlight structure. Admin uploads for About page
+    imagery are stored under `public/assets/about/`.
+
+23. **About page SEO is editable and rendered server-side.**
+    The About admin page has a separate SEO tab with the same search basics, robots,
+    social sharing and schema controls as Home. `AboutPage::toSeoMeta()` feeds both
+    `AboutController::withViewData()` for initial Blade output and
+    `Pages/About/Index.vue` for Inertia `<Head>`, matching the Home and Treatment
+    SEO paths.
+
+24. **Homepage appointment requests are stored and managed in Admin.**
+    The public `Contact.vue` form now uses Inertia `useForm` and posts to
+    `/contact-submissions`. `ContactSubmissionRequest` validates/normalizes the
+    patient fields, and `ContactSubmissionController` stores the request with
+    source, status, IP and user-agent metadata. Admins review the latest requests at
+    `/admin/contacts`, where `Admin/Contacts/Index.vue` supports status changes and
+    internal notes.
+
 ---
 
 ## 6. Deviations from the source file (and why)
 
-Seven, and they are the *only* places the build differs from the source documents.
-The first is a restoration; the other six are changes the user asked for.
+Ten, and they are the *only* places the build differs from the source documents.
+The first is a restoration; the other nine are changes the user asked for.
 
 **A. Restoration — a bug in the source file**
 
@@ -576,11 +665,32 @@ The first is a restoration; the other six are changes the user asked for.
   The source template had static head metadata. Dynamic treatment pages now use
   admin-authored search, social and schema fields, including server-rendered
   Open Graph/Twitter tags and JSON-LD for treatment pages.
+- **Homepage non-treatment content and SEO are now admin-managed.**
+  The source homepage sections were static. At the user's request, Hero, About,
+  Patient Stories, the Contact heading/map and the contact form copy/options are now driven by the singleton
+  `HomePage` record and editable at `/admin/home`, with a separate SEO tab for
+  search/social/schema metadata. The seeded defaults match the supplied source
+  content; Treatments, Reviews, Header and Footer are deliberately excluded.
+  Minimal bannered rich-text display additions were appended to
+  `design/home/hero.css`, `design/home/about.css` and `design/home/contact.css`.
+- **About page content and SEO are now admin-managed.**
+  The source About page sections were static. At the user's request, Masthead,
+  Figures, Founder's Note, Values, Team and CTA are now driven by the singleton
+  `AboutPage` record and editable at `/admin/about`, with a separate SEO tab for
+  search/social/schema metadata. The seeded defaults match the supplied source
+  content. A minimal bannered rich-text display block was appended to
+  `design/about/about.css`.
+- **Homepage contact form now persists submissions.**
+  The source form validated only in the browser. At the user's request, it now posts
+  through Inertia to Laravel, stores each request in `contact_submissions`, and adds
+  a protected `/admin/contacts` inbox for viewing requests and managing follow-up
+  status/notes.
 
 These are recorded decisions — see the note in §2.1 before reverting any of them.
 
-Nothing else was changed. All copy, colours, imagery and layout are as supplied.
-`design/about/about.css` is byte-for-byte identical to the supplied About page CSS.
+Nothing else was changed. Default copy, colours, imagery and layout are as supplied.
+`design/about/about.css` is still source CSS plus the clearly marked rich-text
+addition described above.
 
 > **Note:** the source footer carries a "Demonstration build" disclaimer — all copy,
 > statistics, reviews, contact details, hours, photography and video are placeholder
@@ -590,8 +700,6 @@ Nothing else was changed. All copy, colours, imagery and layout are as supplied.
 
 ## 7. Pending / future work
 
-- [ ] Wire the appointment form to the backend (route + FormRequest + mail/DB) using
-      Inertia's `useForm`. Currently front-end only.
 - [ ] Replace all placeholder content (copy, stats, reviews, phone, email, address, hours).
       Includes the WhatsApp number in `Components/Global/Footer.vue` (`wa.me/919820000000`).
 - [ ] Clinician-review the AI-generated starter treatment detail-page copy seeded by
@@ -600,8 +708,6 @@ Nothing else was changed. All copy, colours, imagery and layout are as supplied.
 - [ ] Point the map iframe at the real clinic location.
 - [ ] Add the real Google reviews link on the "Write a review" button (`href="#"` today).
 - [ ] Add legal pages: privacy policy, terms, sitemap (footer links are `href="#"`).
-- [ ] SEO: Home/About still use static page-level metadata. Add admin-managed SEO
-      for non-treatment pages if those pages also need CMS control.
 - [ ] Admin modules are only a foundation today. Future modules should be added under
       `resources/js/Pages/Admin/<Module>/`, routed from `routes/admin.php`, and wrapped
       in `AdminShell`.
@@ -624,4 +730,12 @@ six original homepage treatments seeded to the database with starter detail-page
 content; WYSIWYG rich-text editor and sanitizer added for treatment paragraph
 fields; Admin treatment form split into SEO/Home/Content tabs; `npm run build`
 and `php artisan test` pass after the Treatments module; advanced treatment SEO
-fields, server-rendered SEO tags and JSON-LD added; treatment SEO defaults seeded.
+fields, server-rendered SEO tags and JSON-LD added; treatment SEO defaults seeded;
+Home page CMS model/migration/admin editor added for Hero, About, Stories and
+Contact map content; Home page SEO made admin-managed; `npm run build` and
+`php artisan test` pass after the Home CMS module; About page CMS
+model/migration/admin editor added for Masthead, Figures, Founder's Note, Values,
+Team and CTA; About page SEO made admin-managed; `npm run build` and
+`php artisan test` pass after the About CMS module; homepage appointment form posts
+to the backend, stores `contact_submissions`, and is reviewable at `/admin/contacts`;
+`php artisan test` and `npm run build` pass after the Contacts module.

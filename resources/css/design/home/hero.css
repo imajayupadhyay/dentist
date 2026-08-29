@@ -76,3 +76,13 @@
 .hero.paused .dot.on i{animation-play-state:paused}
 @keyframes fill{from{width:0}to{width:100%}}
 
+/* ============================================================================
+   Non-source addition: CMS rich text inside dynamic hero slide copy.
+   ========================================================================== */
+.hero .home-rich p+ p{margin-top:10px}
+.hero .home-rich ul,.hero .home-rich ol{
+  margin:12px 0 0;padding-left:22px;color:rgba(255,255,255,.82);line-height:1.7
+}
+.hero .home-rich li+li{margin-top:5px}
+.hero .home-rich a{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.hero .home-rich mark{background:var(--gold);color:var(--ink);border-radius:4px;padding:0 .08em}

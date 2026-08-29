@@ -1,12 +1,28 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import RichText from '@/Components/Global/RichText.vue';
 import { useScrollReveal } from '@/Composables/useScrollReveal';
+
+const props = defineProps({
+    content: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
 const root = ref(null);
 
 useScrollReveal(root);
 
-const values = [
+const fallbackContent = {
+    eyebrow: 'How we work',
+    heading: 'Four things we ',
+    heading_accent: 'never',
+    heading_suffix: ' rush.',
+    lede: 'None of this is complicated. It is simply what a dental visit looks like when the diary is built around the patient rather than the other way round.',
+};
+
+const fallbackValues = [
     {
         num: '01',
         title: 'Unhurried by design',
@@ -31,6 +47,17 @@ const values = [
         delay: '.21s',
     },
 ];
+
+const pageContent = computed(() => ({
+    ...fallbackContent,
+    ...(props.content || {}),
+}));
+
+const values = computed(() => props.content?.items?.length ? props.content.items : fallbackValues);
+
+function delayFor(index) {
+    return index === 0 ? null : { '--d': `${(index * 0.07).toFixed(2)}s` };
+}
 </script>
 
 <template>
@@ -39,23 +66,25 @@ const values = [
 
             <div class="ab-head">
                 <div data-rv>
-                    <span class="eyebrow">How we work</span>
-                    <h2 class="dis">Four things we <em>never</em> rush.</h2>
+                    <span class="eyebrow">{{ pageContent.eyebrow }}</span>
+                    <h2 class="dis">
+                        {{ pageContent.heading }}<em v-if="pageContent.heading_accent">{{ pageContent.heading_accent }}</em>{{ pageContent.heading_suffix }}
+                    </h2>
                 </div>
-                <p class="lede" data-rv style="--d:.08s">None of this is complicated. It is simply what a dental visit looks like when the diary is built around the patient rather than the other way round.</p>
+                <RichText class="lede ab-rich" :html="pageContent.lede" data-rv style="--d:.08s" />
             </div>
 
             <div class="ab-values-grid">
                 <article
-                    v-for="value in values"
-                    :key="value.num"
+                    v-for="(value, index) in values"
+                    :key="`${value.num}-${index}`"
                     class="ab-val"
                     data-rv
-                    :style="value.delay ? { '--d': value.delay } : null"
+                    :style="value.delay ? { '--d': value.delay } : delayFor(index)"
                 >
                     <span class="n" aria-hidden="true">{{ value.num }}</span>
                     <h3>{{ value.title }}</h3>
-                    <p>{{ value.copy }}</p>
+                    <RichText class="ab-rich" :html="value.copy" />
                 </article>
             </div>
 

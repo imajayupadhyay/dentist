@@ -1,6 +1,14 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import RichText from '@/Components/Global/RichText.vue';
 import { useScrollReveal } from '@/Composables/useScrollReveal';
+
+const props = defineProps({
+    content: {
+        type: Object,
+        default: () => ({}),
+    },
+});
 
 const root = ref(null);
 const lead = ref(null);
@@ -8,11 +16,36 @@ const inset = ref(null);
 
 useScrollReveal(root);
 
-const meta = [
-    'Bandra West, Mumbai',
-    'Established 2009',
-    'Five clinicians',
-];
+const fallbackContent = {
+    eyebrow: 'About the clinic',
+    heading: 'Sixteen years of ',
+    heading_accent: 'unhurried',
+    heading_suffix: ' dentistry.',
+    lede: 'We opened on Linking Road in 2009 with one rule that has not changed since: nobody leaves this chair unsure about what was done, why it was done, or what it cost.',
+    meta: [
+        { text: 'Bandra West, Mumbai' },
+        { text: 'Established 2009' },
+        { text: 'Five clinicians' },
+    ],
+    primary_label: 'Book an appointment',
+    primary_href: '/#book',
+    secondary_label: 'Meet the team',
+    secondary_href: '#team',
+    lead_image: '/assets/clinic-wide.jpg',
+    lead_image_alt: "A dentist at work in one of the clinic's treatment rooms",
+    inset_image: '/assets/clinic-suite.jpg',
+    inset_image_alt: 'A treatment chair and overhead light in the clinic',
+    proof_stars: 5,
+    proof_rating: '4.9 out of 5',
+    proof_text: '860 Google reviews',
+};
+
+const pageContent = computed(() => ({
+    ...fallbackContent,
+    ...(props.content || {}),
+}));
+
+const meta = computed(() => pageContent.value.meta?.length ? pageContent.value.meta : fallbackContent.meta);
 
 let cleanupParallax = null;
 
@@ -76,38 +109,44 @@ onBeforeUnmount(() => {
             <div class="ab-hero-in">
 
                 <div class="ab-hero-copy">
-                    <span class="eyebrow" data-rv>About the clinic</span>
-                    <h1 class="dis" data-rv style="--d:.06s">Sixteen years of <em>unhurried</em> dentistry.</h1>
-                    <p class="lede" data-rv style="--d:.12s">We opened on Linking Road in 2009 with one rule that has not changed since: nobody leaves this chair unsure about what was done, why it was done, or what it cost.</p>
+                    <span class="eyebrow" data-rv>{{ pageContent.eyebrow }}</span>
+                    <h1 class="dis" data-rv style="--d:.06s">
+                        {{ pageContent.heading }}<em v-if="pageContent.heading_accent">{{ pageContent.heading_accent }}</em>{{ pageContent.heading_suffix }}
+                    </h1>
+                    <RichText class="lede ab-rich" :html="pageContent.lede" data-rv style="--d:.12s" />
 
                     <div class="ab-meta" data-rv style="--d:.18s">
-                        <span v-for="item in meta" :key="item">{{ item }}</span>
+                        <span v-for="item in meta" :key="item.text">{{ item.text }}</span>
                     </div>
 
                     <div class="ab-hero-cta" data-rv style="--d:.24s">
-                        <a class="btn btn-brand" href="/#book">Book an appointment
+                        <a class="btn btn-brand" :href="pageContent.primary_href">{{ pageContent.primary_label }}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                         </a>
-                        <a class="btn btn-ghost" href="#team">Meet the team</a>
+                        <a
+                            v-if="pageContent.secondary_label && pageContent.secondary_href"
+                            class="btn btn-ghost"
+                            :href="pageContent.secondary_href"
+                        >{{ pageContent.secondary_label }}</a>
                     </div>
                 </div>
 
                 <div class="ab-stack" data-rv style="--d:.14s">
                     <div class="ab-shot lead" ref="lead">
-                        <img src="/assets/clinic-wide.jpg" alt="A dentist at work in one of the clinic's treatment rooms" fetchpriority="high" width="1135" height="1700">
+                        <img :src="pageContent.lead_image" :alt="pageContent.lead_image_alt" fetchpriority="high" width="1135" height="1700">
                     </div>
 
                     <div class="ab-shot inset" ref="inset">
-                        <img src="/assets/clinic-suite.jpg" alt="A treatment chair and overhead light in the clinic" loading="lazy" width="1700" height="1133">
+                        <img :src="pageContent.inset_image" :alt="pageContent.inset_image_alt" loading="lazy" width="1700" height="1133">
                     </div>
 
                     <div class="ab-chip">
                         <span class="stars" aria-hidden="true">
-                            <svg v-for="star in 5" :key="star" viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .9-5 4.9 1.2 7L12 18l-6.2 3.3L7 14.3 2 9.4l7-.9z"/></svg>
+                            <svg v-for="star in pageContent.proof_stars" :key="star" viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .9-5 4.9 1.2 7L12 18l-6.2 3.3L7 14.3 2 9.4l7-.9z"/></svg>
                         </span>
                         <span>
-                            <b>4.9 out of 5</b>
-                            <small>860 Google reviews</small>
+                            <b>{{ pageContent.proof_rating }}</b>
+                            <small>{{ pageContent.proof_text }}</small>
                         </span>
                     </div>
                 </div>

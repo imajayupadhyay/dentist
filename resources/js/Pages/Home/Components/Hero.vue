@@ -1,43 +1,70 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import RichText from '@/Components/Global/RichText.vue';
 
 const DURATION = 6500;
 
-const slides = [
+const props = defineProps({
+    slides: {
+        type: Array,
+        default: () => [],
+    },
+    trustItems: {
+        type: Array,
+        default: () => [],
+    },
+});
+
+const fallbackSlides = [
     {
         eyebrow: 'Bandra West · Mumbai',
         heading: 'Your best smile, ',
-        em: 'by design.',
+        heading_accent: 'by design.',
         copy: 'Digital smile design, ceramic artistry and ninety-minute appointments — so nothing is rushed, and nothing is missed.',
-        secondary: { label: 'See treatments', href: '#treatments' },
+        primary_label: 'Book appointment',
+        primary_href: '#book',
+        secondary_label: 'See treatments',
+        secondary_href: '#treatments',
         image: '/assets/hero-smile.jpg',
+        image_alt: '',
         dot: 'Smile design',
     },
     {
         eyebrow: 'Comfort first',
         heading: "Dentistry that ",
-        em: "doesn't hurt.",
+        heading_accent: "doesn't hurt.",
         copy: 'Numbing before the needle, computer-controlled delivery, and a hand signal that stops everything the moment you raise it.',
-        secondary: { label: 'How we work', href: '#about' },
+        primary_label: 'Book appointment',
+        primary_href: '#book',
+        secondary_label: 'How we work',
+        secondary_href: '#about',
         image: '/assets/smile-closeup.jpg',
+        image_alt: '',
         dot: 'Painless care',
     },
     {
         eyebrow: 'All under one roof',
         heading: 'Implants, aligners, ',
-        em: 'everything.',
+        heading_accent: 'everything.',
         copy: 'From same-day emergencies to full-mouth rehabilitation — planned, placed and finished in-house by the same clinician.',
-        secondary: { label: 'Browse all', href: '#treatments' },
+        primary_label: 'Book appointment',
+        primary_href: '#book',
+        secondary_label: 'Browse all',
+        secondary_href: '#treatments',
         image: '/assets/clinic-suite.jpg',
+        image_alt: '',
         dot: 'Full service',
     },
 ];
 
-const trust = [
+const fallbackTrust = [
     { value: '16', label: 'Years in practice' },
     { value: '12,400+', label: 'Treatments done' },
     { value: '4.9★', label: '860 Google reviews' },
 ];
+
+const slides = computed(() => props.slides?.length ? props.slides : fallbackSlides);
+const trust = computed(() => props.trustItems?.length ? props.trustItems : fallbackTrust);
 
 const hero = ref(null);
 const active = ref(0);
@@ -51,7 +78,11 @@ let reduceMotion = false;
 let touchX = null;
 
 function go(next) {
-    active.value = (next + slides.length) % slides.length;
+    if (slides.value.length === 0) {
+        return;
+    }
+
+    active.value = (next + slides.value.length) % slides.value.length;
     cycle.value += 1;
     restart();
 }
@@ -59,7 +90,7 @@ function go(next) {
 function restart() {
     clearInterval(timer);
 
-    if (reduceMotion) {
+    if (reduceMotion || slides.value.length <= 1) {
         return;
     }
 
@@ -107,6 +138,17 @@ onMounted(() => {
     restart();
 });
 
+watch(
+    () => slides.value.length,
+    (length) => {
+        if (active.value >= length) {
+            active.value = 0;
+        }
+
+        restart();
+    },
+);
+
 onBeforeUnmount(() => clearInterval(timer));
 </script>
 
@@ -128,7 +170,7 @@ onBeforeUnmount(() => clearInterval(timer));
         <div class="frame" aria-hidden="true">
             <figure
                 v-for="(slide, index) in slides"
-                :key="slide.image"
+                :key="`${slide.image}-${index}`"
                 :class="{ on: index === active }"
             >
                 <img
@@ -153,13 +195,19 @@ onBeforeUnmount(() => clearInterval(timer));
                     :aria-label="`${index + 1} of ${slides.length}`"
                 >
                     <span class="eyebrow">{{ slide.eyebrow }}</span>
-                    <h1 class="dis">{{ slide.heading }}<em>{{ slide.em }}</em></h1>
-                    <p>{{ slide.copy }}</p>
+                    <h1 class="dis">
+                        {{ slide.heading }}<em v-if="slide.heading_accent">{{ slide.heading_accent }}</em>
+                    </h1>
+                    <RichText class="hero-rich home-rich" :html="slide.copy" />
                     <div class="hero-cta">
-                        <a class="btn btn-brand" href="#book">Book appointment
+                        <a class="btn btn-brand" :href="slide.primary_href || '#book'">{{ slide.primary_label || 'Book appointment' }}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                         </a>
-                        <a class="btn btn-ghost" :href="slide.secondary.href">{{ slide.secondary.label }}</a>
+                        <a
+                            v-if="slide.secondary_label && slide.secondary_href"
+                            class="btn btn-ghost"
+                            :href="slide.secondary_href"
+                        >{{ slide.secondary_label }}</a>
                     </div>
                 </article>
             </div>

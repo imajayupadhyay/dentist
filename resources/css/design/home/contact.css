@@ -51,3 +51,17 @@
   letter-spacing:-.02em;color:#04372c}
 .c-ok span{display:block;font-size:13.5px;color:#0b5245;margin-top:2px}
 
+/* ============================================================================
+   CMS contact form additions
+   ----------------------------------------------------------------------------
+   Non-source rules for admin-authored contact form copy and backend submission
+   states. Original source declarations above are intentionally left intact.
+   ========================================================================== */
+.form-card .contact-form-intro{margin:8px 0 0;font-size:14.5px;color:var(--ink-soft);line-height:1.62}
+.form-card .contact-form-intro p{margin:0 0 10px}
+.form-card .contact-form-intro p:last-child{margin-bottom:0}
+.fld.err textarea{border-color:var(--brand);background:var(--brand-soft)}
+.cform-foot .btn:disabled{opacity:.72;cursor:wait;transform:none}
+.c-ok .contact-success-copy{display:block;margin-top:2px;font-size:13.5px;color:#0b5245;line-height:1.5}
+.c-ok .contact-success-copy p{margin:0 0 6px}
+.c-ok .contact-success-copy p:last-child{margin-bottom:0}
