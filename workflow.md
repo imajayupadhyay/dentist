@@ -69,7 +69,8 @@ resources/
 │       ├── sections.css            ← .sec, h2.dis, .lede, [data-rv] reveal
 │       ├── header.css              ← global
 │       ├── mobile-nav.css          ← full-screen drawer (non-source, redesign)
-│       ├── footer.css              ← global (+ WhatsApp CTA block at end, non-source)
+│       ├── header-dynamic.css      ← admin-managed dropdown nav (non-source)
+│       ├── footer.css              ← global (+ WhatsApp CTA and bottom bar blocks at end, non-source)
 │       ├── home/                   ← page-scoped stylesheets
 │       │   ├── hero.css
 │       │   ├── about.css
@@ -134,6 +135,10 @@ resources/
             │   └── Login.vue
             ├── Dashboard/
             │   └── Index.vue
+            ├── Header/
+            │   └── Form.vue
+            ├── Footer/
+            │   └── Form.vue
             ├── Home/
             │   └── Form.vue
             ├── About/
@@ -170,6 +175,12 @@ resources/
 - They are rendered by `AppLayout.vue`, **not** duplicated inside each page.
 - A page opts in simply by wrapping its content in `<AppLayout>`.
 - Never copy header/footer markup into a page component.
+- `Header.vue` is data-driven from the shared Inertia `siteHeader` prop backed by
+  the singleton `SiteHeader` record. Keep the built-in fallback in sync with
+  `SiteHeader::defaultAttributes()` so the site can boot before migration/seeding.
+- Header dropdown styling is a deliberate non-source addition in
+  `resources/css/design/header-dynamic.css`. Do not put dropdown rules into the
+  verbatim `header.css`.
 - `Header.vue` is a **multi-root component**: the `.nav` bar *and* the `.mnav`
   full-screen drawer are siblings. The drawer must not be nested inside the bar —
   see §5.8 for why.
@@ -184,6 +195,9 @@ resources/
   across future Admin pages.
 - `AdminShell.vue` composes `Sidebar` + `Topbar` + page content. New authenticated
   Admin pages should normally render inside `AdminShell`.
+- The Header and Footer modules live at `resources/js/Pages/Admin/Header/Form.vue`
+  and `resources/js/Pages/Admin/Footer/Form.vue`, routed from `routes/admin.php`
+  as `/admin/header` and `/admin/footer`.
 - Admin CSS lives in `resources/css/design/admin/admin.css`; keep selectors prefixed
   with `admin-` so the public website design remains isolated.
 - Admin authentication uses Laravel's existing `web` session guard plus the `is_admin`
@@ -244,6 +258,8 @@ Pages/
 └── Admin/
     ├── Auth/       { Login.vue }
     ├── Dashboard/  { Index.vue }
+    ├── Header/     { Form.vue }
+    ├── Footer/     { Form.vue }
     ├── Contacts/   { Index.vue }
     ├── Users/      { Index.vue }
     ├── Treatments/ { Index.vue, Form.vue }
@@ -261,13 +277,15 @@ Page-specific components never mix between pages.
 | File | Role |
 |---|---|
 | `routes/web.php` | `/` → `HomeController`; `POST /contact-submissions` → homepage appointment storage; `/about-us` → `AboutController`; `/treatments/{treatment}` → dynamic treatment detail page |
-| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/home`, `/admin/about`, `/admin/contacts`, `/admin/users`, `/admin/treatments`, `/admin/logout` |
+| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/header`, `/admin/footer`, `/admin/home`, `/admin/about`, `/admin/contacts`, `/admin/users`, `/admin/treatments`, `/admin/logout` |
 | `app/Http/Controllers/HomeController.php` | Loads singleton `HomePage` content/SEO plus active treatments for the homepage |
 | `app/Http/Controllers/ContactSubmissionController.php` | Stores homepage appointment form submissions in `contact_submissions` |
 | `app/Http/Controllers/AboutController.php` | Loads singleton `AboutPage` content/SEO for the About Us page |
 | `app/Http/Controllers/TreatmentController.php` | Public treatment detail page by slug; hides inactive treatments |
 | `app/Http/Controllers/Admin/HomePageController.php` | Admin singleton editor for homepage SEO and non-treatment/non-review content |
 | `app/Http/Controllers/Admin/AboutPageController.php` | Admin singleton editor for About page SEO and section content |
+| `app/Http/Controllers/Admin/HeaderController.php` | Admin singleton editor for global header logo, actions and navigation tree |
+| `app/Http/Controllers/Admin/FooterController.php` | Admin singleton editor for global footer CTA, brand block, links, socials, contact rows and bottom bar |
 | `app/Http/Controllers/Admin/ContactSubmissionController.php` | Admin inbox for viewing homepage appointment requests and updating status/notes |
 | `app/Http/Controllers/Admin/UserController.php` | Admin user management for creating, editing and deleting admin accounts |
 | `app/Http/Controllers/Admin/TreatmentController.php` | Admin CRUD for treatments, including optional public asset image uploads |
@@ -277,10 +295,12 @@ Page-specific components never mix between pages.
 | `app/Http/Requests/Admin/UpdateAdminUserRequest.php` | Validates admin user profile updates and optional password changes |
 | `app/Http/Requests/Admin/HomePageRequest.php` | Admin homepage validation, rich-text sanitizing and repeat-row cleanup |
 | `app/Http/Requests/Admin/AboutPageRequest.php` | Admin About page validation, rich-text sanitizing and repeat-row cleanup |
+| `app/Http/Requests/Admin/HeaderRequest.php` | Admin header validation, safe href checks and navigation-tree cleanup |
+| `app/Http/Requests/Admin/FooterRequest.php` | Admin footer validation, safe href checks and repeat-row cleanup |
 | `app/Http/Requests/Admin/TreatmentRequest.php` | Admin treatment validation and repeat-row cleanup |
 | `app/Support/RichTextSanitizer.php` | Allowlist sanitizer for admin-authored treatment rich text |
 | `app/Http/Middleware/EnsureAdmin.php` | Blocks non-admin authenticated users from admin routes |
-| `app/Http/Middleware/HandleInertiaRequests.php` | Shares `appName`, `auth.user`, `flash`, dynamic `treatmentLinks` for global footer navigation |
+| `app/Http/Middleware/HandleInertiaRequests.php` | Shares `appName`, `auth.user`, `flash`, dynamic `siteHeader`, dynamic `siteFooter`, and dynamic `treatmentLinks` for global footer treatment groups |
 | `bootstrap/app.php` | Registers web/admin route files, Inertia middleware, `admin` alias, auth redirects |
 | `database/migrations/2026_08_27_180000_add_is_admin_to_users_table.php` | Adds the `users.is_admin` admin gate |
 | `database/migrations/2026_08_29_090000_create_treatments_table.php` | Adds dynamic treatment homepage/detail content |
@@ -289,10 +309,16 @@ Page-specific components never mix between pages.
 | `database/migrations/2026_08_29_130000_create_about_pages_table.php` | Adds singleton About page CMS content and SEO fields |
 | `database/migrations/2026_08_29_140000_create_contact_submissions_table.php` | Adds stored homepage appointment/contact submissions |
 | `database/migrations/2026_08_29_141000_add_contact_form_fields_to_home_pages_table.php` | Adds admin-editable homepage contact form copy/options to `home_pages` |
+| `database/migrations/2026_08_29_150000_create_site_headers_table.php` | Adds singleton global header content and nested navigation JSON |
+| `database/migrations/2026_08_29_151000_create_site_footers_table.php` | Adds singleton global footer content and repeatable footer JSON |
+| `database/seeders/SiteHeaderSeeder.php` | Seeds the original static global header into `site_headers` |
+| `database/seeders/SiteFooterSeeder.php` | Seeds the current global footer into `site_footers` |
 | `database/seeders/HomePageSeeder.php` | Seeds the original static homepage content into `home_pages` |
 | `database/seeders/AboutPageSeeder.php` | Seeds the original static About page content into `about_pages` |
 | `database/seeders/TreatmentSeeder.php` | Seeds the six original homepage treatments and starter detail-page content |
-| `database/seeders/DatabaseSeeder.php` | Calls `HomePageSeeder`, `AboutPageSeeder` and `TreatmentSeeder` |
+| `database/seeders/DatabaseSeeder.php` | Calls `SiteHeaderSeeder`, `SiteFooterSeeder`, `HomePageSeeder`, `AboutPageSeeder` and `TreatmentSeeder` |
+| `app/Models/SiteHeader.php` | Singleton global header defaults, casts and public/admin serialization |
+| `app/Models/SiteFooter.php` | Singleton global footer defaults, option maps, casts and public/admin serialization |
 | `app/Models/HomePage.php` | Singleton homepage defaults, casts, admin/public serialization and SEO metadata |
 | `app/Models/AboutPage.php` | Singleton About page defaults, casts, admin/public serialization and SEO metadata |
 | `app/Models/ContactSubmission.php` | Stored contact/appointment request data, status options and admin serialization |
@@ -312,7 +338,9 @@ They are **not** imported through Vite — they are static files served from `pu
 which keeps the markup identical to the source HTML.
 Admin-uploaded homepage assets are stored in `public/assets/home/`; About page uploads
 are stored in `public/assets/about/`; treatment uploads are stored in
-`public/assets/treatments/`. All are saved as public `/assets/...` paths.
+`public/assets/treatments/`; Header logo uploads are stored in
+`public/assets/header/`; Footer logo uploads are stored in `public/assets/footer/`.
+All are saved as public `/assets/...` paths.
 
 ---
 
@@ -401,6 +429,8 @@ FAQ schema when FAQs exist).
 |---|---|---|---|
 | Login | `/drpushpa-secure-login` | `Admin/Auth/Login.vue` | Title: `Doctor Pushpa - Secure Login`; posts to `/drpushpa-secure-login` |
 | Dashboard | `/admin/dashboard` | `Admin/Dashboard/Index.vue` | Basic dashboard only; wrapped in `AdminShell` |
+| Header | `/admin/header` | `Admin/Header/Form.vue` | Singleton global header editor for logo, brand text, phone action, primary CTA and hierarchical dropdown navigation |
+| Footer | `/admin/footer` | `Admin/Footer/Form.vue` | Singleton global footer editor for CTA, brand block, social links, link groups, contact rows and bottom bar |
 | Home | `/admin/home` | `Admin/Home/Form.vue` | Singleton homepage editor with SEO and Content tabs; manages hero, about, stories, contact-map and contact-form content |
 | About | `/admin/about` | `Admin/About/Form.vue` | Singleton About page editor with SEO and Content tabs; manages masthead, figures, founder note, values, team and CTA |
 | Contacts | `/admin/contacts` | `Admin/Contacts/Index.vue` | Admin inbox for homepage appointment requests, with status and notes controls |
@@ -631,12 +661,54 @@ user was hashed before storage; do not record plaintext credentials in this file
     created/updated users to remain admins, blocks deleting the currently logged-in
     admin account, and blocks removing the final admin account.
 
+26. **Global header is CMS-backed through a singleton record.**
+    `site_headers` stores one row keyed `main`. `SiteHeader::defaultAttributes()`
+    and `SiteHeaderSeeder` seed the current static header values: logo, brand text,
+    phone link, appointment CTA, mobile drawer note and the five original nav items.
+    `HandleInertiaRequests` shares the cleaned public payload as `siteHeader` with a
+    schema-guarded fallback so the site can boot before the migration exists.
+    `/admin/header` edits the singleton through `Admin/Header/Form.vue`; logo uploads
+    are stored under `public/assets/header/`. Navigation is stored as a JSON tree:
+    top-level items plus one child level for dropdown menus. `HeaderRequest` trims
+    blank rows and blocks unsafe `javascript:`, `data:` and `vbscript:` hrefs while
+    allowing internal paths, hashes, `tel:`, `mailto:` and `http(s)` links.
+    Desktop dropdowns are compact, content-width panels opened by hover/focus; mobile
+    dropdowns are expandable groups inside the existing full-screen drawer. All new
+    dropdown rules live in `design/header-dynamic.css`, not the verbatim source
+    `header.css`.
+
+27. **Footer bottom bar simplified.**
+    At the user's request, the source footer's legal-placeholder links and
+    "Demonstration build" disclaimer are no longer rendered. `Footer.vue` now closes
+    with a compact bottom bar containing copyright, a location pill and the existing
+    back-to-top action. The original source declarations in `design/footer.css` remain
+    in place; the replacement layout is appended as a bannered non-source block at the
+    end of that stylesheet.
+
+28. **Global footer is CMS-backed through a singleton record.**
+    `site_footers` stores one row keyed `main`. `SiteFooter::defaultAttributes()`
+    and `SiteFooterSeeder` seed the footer as it currently renders after the bottom
+    bar redesign: emergency CTA with call/WhatsApp actions, brand/logo/blurb,
+    social links, Treatments and Clinic link groups, Visit us contact rows, and the
+    compact bottom bar. `HandleInertiaRequests` shares the cleaned public payload as
+    `siteFooter` with a schema-guarded fallback so the site can boot before the
+    migration exists. `/admin/footer` edits the singleton through
+    `Admin/Footer/Form.vue`; logo uploads are stored under `public/assets/footer/`.
+    Repeatable footer areas are JSON arrays: `cta_actions`, `social_links`,
+    `link_groups` and `contact_items`. Link groups support a `source` value:
+    `manual` renders the saved rows, while `treatments` keeps the existing behavior
+    of rendering active treatment records from the shared `treatmentLinks` prop,
+    falling back to the seeded rows when treatment records are unavailable.
+    `FooterRequest` trims blank rows and blocks unsafe `javascript:`, `data:` and
+    `vbscript:` hrefs while allowing internal paths, hashes, `tel:`, `mailto:` and
+    `http(s)` links.
+
 ---
 
 ## 6. Deviations from the source file (and why)
 
-Ten, and they are the *only* places the build differs from the source documents.
-The first is a restoration; the other nine are changes the user asked for.
+Thirteen, and they are the *only* places the build differs from the source documents.
+The first is a restoration; the other twelve are changes the user asked for.
 
 **A. Restoration — a bug in the source file**
 
@@ -653,6 +725,18 @@ The first is a restoration; the other nine are changes the user asked for.
 
 - **Footer emergency CTA** now carries a WhatsApp action beside the call button (§5.7).
   Styles: bannered block at the end of `design/footer.css`.
+- **Footer bottom bar redesigned and disclaimer removed.**
+  The source footer rendered legal-placeholder links plus a "Demonstration build"
+  disclaimer. At the user's request, both are removed from `Footer.vue`; the footer
+  now ends with copyright, a Bandra West location pill and the existing back-to-top
+  control. Styles: bannered block at the end of `design/footer.css` (§5.27).
+- **Global footer content is now admin-managed.**
+  The source/current footer used static CTA, brand, social, contact and bottom-bar
+  content, with the Treatments column dynamically populated from active treatment
+  records. At the user's request, `/admin/footer` now manages the whole footer from
+  a singleton `SiteFooter` record shared as `siteFooter`; repeatable areas are stored
+  as JSON arrays, and the Treatments group can keep using active treatment records
+  through its `treatments` source while retaining seeded fallback links (§5.28).
 - **Mobile navigation** replaced — the source's dropdown `.sheet` panel is gone, and a
   full-screen drawer sliding in from the right takes its place (§5.8).
   Styles: `design/mobile-nav.css`.
@@ -662,6 +746,13 @@ The first is a restoration; the other nine are changes the user asked for.
 - **Global header navigation** now has an **About Us** item that routes to the new
   `/about-us` page, and Doctors routes to `/about-us#team` (§5.11). This replaces
   the source's same-page About/Doctors anchor behaviour at the user's request.
+- **Global header content and dropdown navigation are now admin-managed.**
+  The source header used static logo/actions and a flat nav. At the user's request,
+  `/admin/header` now manages the header logo, brand text, phone action, primary CTA,
+  mobile drawer note and a top-level navigation tree with dropdown children. Desktop
+  dropdowns are compact content-width panels, and mobile dropdowns expand inside the
+  existing drawer. Styles: `design/header-dynamic.css`; data: singleton
+  `SiteHeader` record shared as `siteHeader` (§5.26).
 - **Homepage treatment bands are now full-card links** to `/treatments/{slug}`.
   The source used non-clickable `<article>` bands with only a "Read more" anchor.
   The dynamic Vue implementation renders each band as an Inertia link so clicking
@@ -701,26 +792,24 @@ The first is a restoration; the other nine are changes the user asked for.
 
 These are recorded decisions — see the note in §2.1 before reverting any of them.
 
-Nothing else was changed. Default copy, colours, imagery and layout are as supplied.
-`design/about/about.css` is still source CSS plus the clearly marked rich-text
-addition described above.
-
-> **Note:** the source footer carries a "Demonstration build" disclaimer — all copy,
-> statistics, reviews, contact details, hours, photography and video are placeholder
-> content and must be replaced before launch. That disclaimer has been preserved.
+Except for the recorded departures above, default copy, colours, imagery and layout
+are as supplied. Placeholder copy, statistics, reviews, contact details, hours,
+photography and video must still be replaced before launch.
 
 ---
 
 ## 7. Pending / future work
 
 - [ ] Replace all placeholder content (copy, stats, reviews, phone, email, address, hours).
-      Includes the WhatsApp number in `Components/Global/Footer.vue` (`wa.me/919820000000`).
+      Includes the default dynamic header phone number in `SiteHeader`, and the
+      default dynamic footer call/WhatsApp/contact values in `SiteFooter`.
 - [ ] Clinician-review the AI-generated starter treatment detail-page copy seeded by
       `TreatmentSeeder` before launch.
 - [ ] Replace stock photography and the generated sample videos.
 - [ ] Point the map iframe at the real clinic location.
 - [ ] Add the real Google reviews link on the "Write a review" button (`href="#"` today).
-- [ ] Add legal pages: privacy policy, terms, sitemap (footer links are `href="#"`).
+- [ ] Add legal pages: privacy policy, terms, sitemap. The placeholder footer links
+      were removed from the footer bottom bar until real pages exist.
 - [ ] Admin modules are only a foundation today. Future modules should be added under
       `resources/js/Pages/Admin/<Module>/`, routed from `routes/admin.php`, and wrapped
       in `AdminShell`.
@@ -752,4 +841,11 @@ Team and CTA; About page SEO made admin-managed; `npm run build` and
 `php artisan test` pass after the About CMS module; homepage appointment form posts
 to the backend, stores `contact_submissions`, and is reviewable at `/admin/contacts`;
 `php artisan test` and `npm run build` pass after the Contacts module; Admin Users
-module added at `/admin/users` for creating and managing admin accounts.
+module added at `/admin/users` for creating and managing admin accounts; Header
+management module added at `/admin/header` for logo/actions/navigation with compact
+desktop dropdowns and expandable mobile drawer groups; `npm run build` and
+`php artisan test` pass after the Header module; footer bottom bar redesigned and
+the source demonstration disclaimer/legal-placeholder links removed at the user's
+request; Footer management module added at `/admin/footer` for CTA, brand, social,
+link groups, contact rows and bottom bar content; footer defaults seeded to
+`site_footers`; `npm run build` and `php artisan test` pass after the Footer module.

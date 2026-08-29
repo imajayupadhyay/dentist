@@ -20,6 +20,7 @@
 @import './design/buttons.css';
 @import './design/header.css';
 @import './design/mobile-nav.css';
+@import './design/header-dynamic.css';
 
 /* ── Home page sections ────────────────────────────────────────────────── */
 @import './design/home/hero.css';

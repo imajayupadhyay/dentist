@@ -13,6 +13,18 @@ const items = [
         match: '/admin/dashboard',
     },
     {
+        label: 'Header',
+        href: '/admin/header',
+        icon: 'M4 5h16v4H4V5zm0 6h10v8H4v-8zm12 0h4v8h-4v-8z',
+        match: '/admin/header',
+    },
+    {
+        label: 'Footer',
+        href: '/admin/footer',
+        icon: 'M4 5h16v5H4V5zm0 7h4v7H4v-7zm6 0h4v7h-4v-7zm6 0h4v7h-4v-7z',
+        match: '/admin/footer',
+    },
+    {
         label: 'Home',
         href: '/admin/home',
         icon: 'M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6h-4v6H5a1 1 0 01-1-1v-9.5z',

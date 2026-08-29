@@ -76,7 +76,45 @@
 .ft-cta .btn-wa::before{background:var(--ink)}
 .ft-cta .btn-wa:hover{color:#fff;border-color:var(--ink);transform:translateY(-3px)}
 .ft-cta .btn-wa svg{fill:currentColor}
+.ft-cta .btn-wa svg.stroke-icon{fill:none}
+.ft-cta .btn-wa svg.fill-icon{fill:currentColor}
+.ft-cta .ic svg.stroke-icon{fill:none;stroke:#fff}
+.ft-cta .ic svg.fill-icon{fill:#fff;stroke:none}
 .ft-cta .btn-wa:hover svg{transform:none}
 @media(max-width:560px){
   .ft-cta-actions{margin-left:0;width:100%;flex-direction:column;gap:10px}
+}
+
+
+/* ── Added (not from the source document): simplified footer bottom bar ──
+   Removes the legal-placeholder row and launch disclaimer from the rendered
+   footer, replacing them with a tighter closing bar requested by the user. */
+.ft-bot{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px 18px;
+  align-items:center;margin-top:clamp(2px,1vw,12px);
+  padding:18px 0 calc(20px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.58)
+}
+.ft-copy{min-width:0;font-size:13px;line-height:1.55}
+.ft-contact span{white-space:pre-line}
+.ft-loc{
+  display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  padding:8px 12px;border-radius:100px;background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.72);font-size:12.5px;font-weight:650
+}
+.ft-loc::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 0 4px rgba(255,194,77,.12)
+}
+.ft-bot .ft-up{
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.78)
+}
+.ft-bot .ft-up:hover{background:var(--brand);border-color:var(--brand);color:#fff}
+@media(max-width:700px){
+  .ft-bot{grid-template-columns:1fr;justify-items:start}
+  .ft-loc{white-space:normal}
+}
+@media(max-width:560px){
+  .ft-bot .ft-up{width:100%;justify-content:center}
 }

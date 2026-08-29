@@ -1,8 +1,10 @@
 <?php
 
-use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\AboutPageController;
+use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
+use App\Http\Controllers\Admin\FooterController;
+use App\Http\Controllers\Admin\HeaderController;
 use App\Http\Controllers\Admin\HomePageController;
 use App\Http\Controllers\Admin\TreatmentController;
 use App\Http\Controllers\Admin\UserController;
@@ -18,6 +20,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
     Route::middleware(['auth', 'admin'])->group(function (): void {
         Route::get('/', fn () => to_route('admin.dashboard'))->name('index');
         Route::get('/dashboard', fn () => Inertia::render('Admin/Dashboard/Index'))->name('dashboard');
+        Route::get('/header', [HeaderController::class, 'edit'])->name('header.edit');
+        Route::put('/header', [HeaderController::class, 'update'])->name('header.update');
+        Route::get('/footer', [FooterController::class, 'edit'])->name('footer.edit');
+        Route::put('/footer', [FooterController::class, 'update'])->name('footer.update');
         Route::get('/home', [HomePageController::class, 'edit'])->name('home.edit');
         Route::put('/home', [HomePageController::class, 'update'])->name('home.update');
         Route::get('/about', [AboutPageController::class, 'edit'])->name('about.edit');

@@ -1,0 +1,95 @@
+/* ═══════════ DYNAMIC HEADER NAVIGATION ═══════════
+   NOT from the source document. Adds admin-managed dropdown navigation while
+   preserving the original header.css declarations. See workflow.md §6. */
+
+.nav-links{align-items:center}
+.nav-item{position:relative;display:flex}
+.nav-links .nav-trigger{
+  display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:100px;
+  font-size:14.5px;font-weight:500;line-height:1;color:var(--ink-soft);
+  transition:background .3s,color .3s
+}
+.nav-links button.nav-trigger{border:0;background:transparent}
+.nav-links .nav-trigger svg{
+  width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .3s var(--ease)
+}
+.nav-item:hover>.nav-trigger,.nav-item:focus-within>.nav-trigger,.nav-item.current>.nav-trigger{
+  background:var(--brand-soft);color:var(--brand-d)
+}
+.nav-item:hover>.nav-trigger svg,.nav-item:focus-within>.nav-trigger svg{transform:rotate(180deg)}
+.nav-dropdown{
+  position:absolute;top:calc(100% + 10px);left:50%;z-index:210;
+  width:max-content;min-width:220px;max-width:min(280px,calc(100vw - 32px));
+  padding:8px;border-radius:18px;background:rgba(255,255,255,.96);
+  border:1px solid rgba(255,255,255,.95);box-shadow:var(--sh-l);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transform:translate(-50%,-4px);
+  transition:opacity .25s var(--ease),transform .25s var(--ease),visibility 0s linear .25s;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)
+}
+.nav-dropdown::before{
+  content:"";position:absolute;left:0;right:0;bottom:100%;height:12px
+}
+.nav-item:hover>.nav-dropdown,.nav-item:focus-within>.nav-dropdown{
+  opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);
+  transition:opacity .25s var(--ease),transform .25s var(--ease),visibility 0s
+}
+.nav-dropdown a{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px 12px;border-radius:12px;color:var(--ink-soft);
+  font-size:13.5px;font-weight:600;line-height:1.25;white-space:nowrap;
+  transition:background .25s,color .25s,transform .25s var(--ease)
+}
+.nav-dropdown a:hover,.nav-dropdown a[aria-current="page"]{
+  background:var(--brand-soft);color:var(--brand-d);transform:translateX(2px)
+}
+
+.mnav-group{
+  border-bottom:1px solid rgba(255,255,255,.12);
+  opacity:0;transform:translateX(30px);
+  transition:opacity .5s var(--ease-o),transform .5s var(--ease-o)
+}
+.mnav.open .mnav-group{
+  opacity:1;transform:none;transition-delay:calc(.14s + var(--i) * .06s)
+}
+.mnav-parent{display:flex;align-items:center;gap:12px}
+.mnav-links .mnav-parent-main{
+  flex:1;display:flex;align-items:center;padding:clamp(14px,2.6vw,20px) 2px;
+  color:#fff;font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:-.028em;
+  line-height:1.08;font-size:clamp(27px,7.6vw,40px);
+  border-bottom:0;opacity:1;transform:none;transition:color .3s
+}
+.mnav-links button.mnav-parent-main{justify-content:flex-start;text-align:left}
+.mnav-links .mnav-parent-main:hover{color:var(--gold)}
+.mnav-toggle{
+  width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;
+  border-radius:50%;border:1px solid rgba(255,255,255,.16);color:#fff;
+  transition:background .3s,color .3s,border-color .3s
+}
+.mnav-toggle svg{
+  width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .35s var(--ease)
+}
+.mnav-toggle:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.28);color:var(--gold)}
+.mnav-group.open .mnav-toggle svg{transform:rotate(180deg)}
+.mnav-sub{
+  display:grid;gap:4px;max-height:0;overflow:hidden;opacity:0;padding-left:18px;
+  transition:max-height .42s var(--ease-o),opacity .3s,padding-bottom .3s
+}
+.mnav-group.open .mnav-sub{max-height:520px;opacity:1;padding-bottom:14px}
+.mnav-links .mnav-sub a{
+  display:flex;align-items:center;justify-content:flex-start;padding:9px 0 9px 16px;
+  border-bottom:0;border-left:1px solid rgba(255,255,255,.14);
+  color:rgba(255,255,255,.72);font-size:15px;font-weight:600;letter-spacing:0;
+  line-height:1.35;opacity:1;transform:none;
+  transition:color .25s,transform .25s var(--ease),border-color .25s
+}
+.mnav-links .mnav-sub a:hover,.mnav-links .mnav-sub a[aria-current="page"]{
+  color:var(--gold);border-left-color:var(--gold);transform:translateX(3px)
+}
+.mnav-meta{white-space:pre-line}
+
+@media(max-width:860px){
+  .nav-dropdown{display:none}
+}

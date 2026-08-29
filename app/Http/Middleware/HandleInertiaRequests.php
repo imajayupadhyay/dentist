@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteFooter;
+use App\Models\SiteHeader;
 use App\Models\Treatment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -52,7 +54,33 @@ class HandleInertiaRequests extends Middleware
             ],
 
             'treatmentLinks' => fn () => $this->treatmentLinks(),
+            'siteHeader' => fn () => $this->siteHeader(),
+            'siteFooter' => fn () => $this->siteFooter(),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function siteFooter(): array
+    {
+        if (! Schema::hasTable('site_footers')) {
+            return SiteFooter::defaultPublicArray();
+        }
+
+        return SiteFooter::current()->toPublicArray();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function siteHeader(): array
+    {
+        if (! Schema::hasTable('site_headers')) {
+            return SiteHeader::defaultPublicArray();
+        }
+
+        return SiteHeader::current()->toPublicArray();
     }
 
     /**
