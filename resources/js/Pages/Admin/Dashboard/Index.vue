@@ -8,7 +8,7 @@ import AdminShell from '../Components/AdminShell.vue';
         <meta name="robots" content="noindex,nofollow">
     </Head>
 
-    <AdminShell>
+    <AdminShell title="Dashboard">
         <section class="admin-dashboard">
             <div class="admin-dashboard-hero">
                 <span class="admin-kicker">Overview</span>

@@ -1,13 +1,15 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const year = computed(() => new Date().getFullYear());
+const page = usePage();
 
 /** wa.me needs the number in international format with no +, spaces or dashes. */
 const whatsapp = 'https://wa.me/919820000000?text=' +
     encodeURIComponent("Hello, I'd like to book a dental appointment.");
 
-const treatments = [
+const fallbackTreatments = [
     { label: 'Painless dentistry', href: '/#treatments' },
     { label: 'Dental implants', href: '/#treatments' },
     { label: 'Invisible aligners', href: '/#treatments' },
@@ -15,6 +17,12 @@ const treatments = [
     { label: 'Jaw joint & TMD', href: '/#treatments' },
     { label: "Kids' dentistry", href: '/#treatments' },
 ];
+
+const treatments = computed(() => {
+    const links = page.props.treatmentLinks;
+
+    return Array.isArray(links) && links.length ? links : fallbackTreatments;
+});
 
 const clinic = [
     { label: 'About the clinic', href: '/about-us' },

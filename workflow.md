@@ -4,7 +4,7 @@
 > It records the rules, the current structure, the decisions already taken and the work
 > still pending, so any new session (human or AI) can continue without losing context.
 >
-> **Last updated:** 2026-08-27
+> **Last updated:** 2026-08-29
 
 ---
 
@@ -79,6 +79,8 @@ resources/
 │       │   └── contact.css
 │       ├── about/                  ← page-scoped stylesheets
 │       │   └── about.css           ← verbatim about.html page stylesheet
+│       ├── treatments/
+│       │   └── treatment.css       ← verbatim treatment.html page stylesheet + bannered rich-text additions
 │       ├── admin/
 │       │   └── admin.css           ← admin-only, selectors prefixed `admin-`
 │       └── responsive.css          ← ALWAYS imported last
@@ -114,13 +116,30 @@ resources/
         │       ├── Values.vue
         │       ├── Team.vue
         │       └── Cta.vue
+        ├── Treatments/
+        │   ├── Show.vue            ← dynamic treatment detail page
+        │   └── Components/         ← treatment-detail-only sections
+        │       ├── AccentHeading.vue
+        │       ├── RichText.vue
+        │       ├── TreatmentHero.vue
+        │       ├── TreatmentSectionNav.vue
+        │       ├── TreatmentOverview.vue
+        │       ├── TreatmentSuitability.vue
+        │       ├── TreatmentProcess.vue
+        │       ├── TreatmentFaq.vue
+        │       ├── TreatmentRelated.vue
+        │       └── TreatmentCta.vue
         └── Admin/                  ← admin panel only; never mix with public pages
             ├── Auth/
             │   └── Login.vue
             ├── Dashboard/
             │   └── Index.vue
+            ├── Treatments/
+            │   ├── Index.vue
+            │   └── Form.vue
             └── Components/
                 ├── AdminShell.vue
+                ├── RichTextEditor.vue
                 ├── Sidebar.vue
                 └── Topbar.vue
 ```
@@ -212,9 +231,11 @@ Pages/
 ├── Home/     { Index.vue, Components/ }
 ├── About/    { Index.vue, Components/ }
 ├── Contact/  { Index.vue, Components/ }
+├── Treatments/ { Show.vue, Components/ }
 └── Admin/
     ├── Auth/       { Login.vue }
     ├── Dashboard/  { Index.vue }
+    ├── Treatments/ { Index.vue, Form.vue }
     └── Components/ { AdminShell.vue, Sidebar.vue, Topbar.vue }
 ```
 
@@ -228,13 +249,23 @@ Page-specific components never mix between pages.
 
 | File | Role |
 |---|---|
-| `routes/web.php` | `/` → `Inertia::render('Home/Index')`; `/about-us` → `Inertia::render('About/Index')` |
-| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/logout` |
+| `routes/web.php` | `/` → `HomeController`; `/about-us` → `Inertia::render('About/Index')`; `/treatments/{treatment}` → dynamic treatment detail page |
+| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/treatments`, `/admin/logout` |
+| `app/Http/Controllers/HomeController.php` | Loads active treatments for the homepage treatment bands |
+| `app/Http/Controllers/TreatmentController.php` | Public treatment detail page by slug; hides inactive treatments |
+| `app/Http/Controllers/Admin/TreatmentController.php` | Admin CRUD for treatments, including optional public asset image uploads |
 | `app/Http/Controllers/Admin/Auth/LoginController.php` | Admin login/logout, validation, throttling, session regeneration |
+| `app/Http/Requests/Admin/TreatmentRequest.php` | Admin treatment validation and repeat-row cleanup |
+| `app/Support/RichTextSanitizer.php` | Allowlist sanitizer for admin-authored treatment rich text |
 | `app/Http/Middleware/EnsureAdmin.php` | Blocks non-admin authenticated users from admin routes |
-| `app/Http/Middleware/HandleInertiaRequests.php` | Shares `appName`, `auth.user`, `flash` |
+| `app/Http/Middleware/HandleInertiaRequests.php` | Shares `appName`, `auth.user`, `flash`, dynamic `treatmentLinks` for global footer navigation |
 | `bootstrap/app.php` | Registers web/admin route files, Inertia middleware, `admin` alias, auth redirects |
 | `database/migrations/2026_08_27_180000_add_is_admin_to_users_table.php` | Adds the `users.is_admin` admin gate |
+| `database/migrations/2026_08_29_090000_create_treatments_table.php` | Adds dynamic treatment homepage/detail content |
+| `database/migrations/2026_08_29_101000_add_advanced_seo_fields_to_treatments_table.php` | Adds advanced treatment SEO fields for canonical, robots, social sharing and schema metadata |
+| `database/seeders/TreatmentSeeder.php` | Seeds the six original homepage treatments and starter detail-page content |
+| `database/seeders/DatabaseSeeder.php` | Calls `TreatmentSeeder` |
+| `app/Models/Treatment.php` | Treatment casts, tone map, public/admin serialization helpers, slug route binding |
 | `app/Models/User.php` | Casts `is_admin` to boolean; password remains hashed |
 | `resources/views/app.blade.php` | Root template (`@inertia`, `@inertiaHead`, `@vite`) |
 
@@ -261,7 +292,7 @@ which keeps the markup identical to the source HTML.
 |---|---|---|---|
 | 1 | `Hero.vue` | `#hero` | 3-slide carousel: autoplay 6.5s, dots w/ progress fill, arrows, swipe, arrow keys, pause on hover |
 | 2 | `About.vue` | `#about` | Intro copy + 4 stat tiles |
-| 3 | `Treatments.vue` | `#treatments` | 6 full-bleed colour bands, alternating `.flip`, driven by a data array |
+| 3 | `Treatments.vue` | `#treatments` | Full-bleed colour bands, alternating `.flip`, driven by active `Treatment` records from the database; each band links to `/treatments/{slug}` |
 | 4 | `Stories.vue` | `#stories` | Horizontal video rail, one clip plays at a time, pauses when scrolled away |
 | 5 | `Reviews.vue` | `#reviews` | Google rating summary + 6 review cards |
 | 6 | `Contact.vue` | `#contact` | Map iframe + appointment form (front-end validation only) |
@@ -286,18 +317,52 @@ About page CSS lives in `resources/css/design/about/about.css`. It is copied
 byte-for-byte from `/Users/ajayupadhyay/Desktop/Dentist/drpuspa/assets/css/about.css`
 and imported after the shared footer styles, before the final global `responsive.css`.
 
+### Treatment detail pages
+
+`Pages/Treatments/Show.vue` composes, in order:
+
+| # | Component | Anchor | Notes |
+|---|---|---|---|
+| 1 | `TreatmentHero.vue` | — | Dynamic hero from `Treatment`; carries `data-tone`, breadcrumbs, facts, WhatsApp and phone CTAs |
+| 2 | `TreatmentSectionNav.vue` | — | Sticky pill nav generated from template section IDs: Overview, Is it for you?, How it works, FAQs |
+| 3 | `TreatmentOverview.vue` | `#overview` | Dynamic overview heading, lede, body paragraphs, image and caption |
+| 4 | `TreatmentSuitability.vue` | `#suitability` | Dynamic usually-good-fit and treat-first lists |
+| 5 | `TreatmentProcess.vue` | `#process` | Dynamic numbered steps |
+| 6 | `TreatmentFaq.vue` | `#faq` | Native `<details>` FAQs, one open at a time |
+| 7 | `TreatmentRelated.vue` | — | Automatically shows the first three other active treatments |
+| 8 | `TreatmentCta.vue` | — | Dynamic CTA band using the treatment tone |
+
+Treatment detail CSS lives in `resources/css/design/treatments/treatment.css`.
+It was copied unchanged from
+`/Users/ajayupadhyay/Desktop/Dentist/drpuspa/assets/css/treatment.css`, then a
+clearly bannered non-source rich-text block was appended for admin-authored
+`strong`, `em`, `mark`, lists, links and line breaks. It is imported above
+`admin.css` and the final global `responsive.css`.
+
+Treatment detail SEO is generated from each `Treatment` record. The public route
+passes a backend SEO payload into the initial Blade response for crawlers/social
+scrapers, while `Pages/Treatments/Show.vue` uses the same payload inside Inertia
+`<Head>` for client-side navigation. The payload includes title, description,
+canonical URL, robots, keywords, Open Graph, Twitter card, article dates and
+JSON-LD (`WebSite`, `WebPage`, `BreadcrumbList`, treatment/service schema and
+FAQ schema when FAQs exist).
+
 ### Admin panel
 
 | Page | Route | Component | Notes |
 |---|---|---|---|
 | Login | `/drpushpa-secure-login` | `Admin/Auth/Login.vue` | Title: `Doctor Pushpa - Secure Login`; posts to `/drpushpa-secure-login` |
 | Dashboard | `/admin/dashboard` | `Admin/Dashboard/Index.vue` | Basic dashboard only; wrapped in `AdminShell` |
+| Treatments list | `/admin/treatments` | `Admin/Treatments/Index.vue` | Lists treatments with visible/hidden state, public view, edit and delete actions |
+| Treatment create | `/admin/treatments/create` | `Admin/Treatments/Form.vue` | Tabbed editor: SEO, Home and Content; SEO tab has search, crawl, social and schema sections; long detail copy uses `RichTextEditor` |
+| Treatment edit | `/admin/treatments/{slug}/edit` | `Admin/Treatments/Form.vue` | Same tabbed editor as create; supports optional content/social image uploads to `public/assets/treatments/` and WYSIWYG rich text |
 
 Admin chrome:
 
 | Component | Role |
 |---|---|
 | `Admin/Components/AdminShell.vue` | Composes sidebar, topbar and page slot |
+| `Admin/Components/RichTextEditor.vue` | Small allowlisted WYSIWYG editor for treatment paragraph fields |
 | `Admin/Components/Sidebar.vue` | Reusable admin navigation |
 | `Admin/Components/Topbar.vue` | Reusable page topbar and logout action |
 
@@ -403,12 +468,73 @@ user was hashed before storage; do not record plaintext credentials in this file
     `/admin/logout`, and the `users.is_admin` flag. The dashboard is intentionally
     minimal until real modules are requested.
 
+13. **Treatments are now database-backed.**
+    `Treatment` records own both homepage-card content and detail-page content.
+    Homepage fields are separate from detail fields so a short band can stay concise
+    while the landing page carries longer copy. Repeatable structures (`facts`,
+    `suitable_for`, `not_suitable`, `steps`, `faqs`) are JSON arrays, which avoids
+    a schema change when a treatment needs one more fact, step or FAQ. Active records
+    are ordered by `sort_order`; inactive records remain editable in Admin but are
+    hidden from the homepage and public detail route.
+
+14. **The supplied treatment detail template was converted to a dynamic page.**
+    Route: `/treatments/{treatment:slug}`. The detail page uses
+    `Pages/Treatments/Show.vue` and page-scoped components under
+    `Pages/Treatments/Components/`. The supplied `treatment.css` is preserved
+    unchanged in `design/treatments/treatment.css`. The original template's
+    page-specific behaviour was ported to Vue: the section nav is rendered from
+    the active sections, scroll spy uses `IntersectionObserver`, scroll reveal reuses
+    `useScrollReveal()`, and FAQs keep native `<details>` with exclusive opening.
+
+15. **Admin Treatments module added.**
+    Admin treatment routes are resource routes under `/admin/treatments`, protected
+    by the existing `auth` + `admin` middleware. The form has the two requested
+    sections: homepage treatment container data and treatment landing-page data.
+    It validates all fields through `TreatmentRequest`, strips blank repeat rows,
+    stores uploaded images under `public/assets/treatments/`, and keeps uploaded
+    image paths as public `/assets/treatments/...` URLs to match the existing static
+    asset convention.
+
+16. **Treatment links are shared for global footer navigation.**
+    `HandleInertiaRequests` now shares active treatment links as `treatmentLinks`.
+    `Footer.vue` uses those links when available and falls back to the original
+    static homepage anchors if the table is unavailable during setup.
+
+17. **Treatment paragraph fields support WYSIWYG editing.**
+    `Admin/Components/RichTextEditor.vue` is a small project-local editor using
+    `contenteditable` and browser editing commands. It supports bold, italic,
+    highlight, bulleted lists, numbered lists, line breaks, links and clear
+    formatting. It is used only for long treatment detail fields: hero summary,
+    section ledes, overview body, step bodies, FAQ answers and CTA body.
+    `TreatmentRequest` sanitizes those fields before validation/storage through
+    `RichTextSanitizer`, which allows only `p`, `br`, `strong`, `em`, `i`, `mark`,
+    `ul`, `ol`, `li` and safe `a` links. Public treatment components render those
+    fields through `Treatments/Components/RichText.vue`; legacy plain text is
+    converted to paragraphs for display.
+
+18. **Admin treatment editing is split into tabs.**
+    `Admin/Treatments/Form.vue` now presents three horizontal tabs: SEO, Home and
+    Content. Only the selected panel is shown, which keeps the treatment editor
+    from becoming one long stacked page. SEO owns the slug and search metadata,
+    Home owns the homepage treatment band, and Content owns the treatment landing
+    page sections. The tab bar marks panels with validation errors and automatically
+    opens the first tab that needs attention after a failed save.
+
+19. **Treatment SEO is editable and rendered server-side.**
+    The SEO tab now manages search basics, crawl controls, social sharing metadata
+    and structured data controls for each treatment. `Treatment::toSeoMeta()`
+    builds a single payload used by both the initial Blade response and
+    `Treatments/Show.vue`, so direct loads expose canonical, robots, Open Graph,
+    Twitter and JSON-LD metadata before JavaScript runs, while Inertia navigation
+    still updates the document head on the client. Server-rendered SEO tags are
+    marked `data-server-seo` and removed after hydration to avoid duplicate tags.
+
 ---
 
 ## 6. Deviations from the source file (and why)
 
-Four, and they are the *only* places the build differs from the source documents.
-The first is a restoration; the other three are changes the user asked for.
+Seven, and they are the *only* places the build differs from the source documents.
+The first is a restoration; the other six are changes the user asked for.
 
 **A. Restoration — a bug in the source file**
 
@@ -434,6 +560,22 @@ The first is a restoration; the other three are changes the user asked for.
 - **Global header navigation** now has an **About Us** item that routes to the new
   `/about-us` page, and Doctors routes to `/about-us#team` (§5.11). This replaces
   the source's same-page About/Doctors anchor behaviour at the user's request.
+- **Homepage treatment bands are now full-card links** to `/treatments/{slug}`.
+  The source used non-clickable `<article>` bands with only a "Read more" anchor.
+  The dynamic Vue implementation renders each band as an Inertia link so clicking
+  anywhere on the container opens the relevant treatment page. A bannered non-source
+  `.tband{display:block}` rule was added at the end of `design/home/treatments.css`
+  to preserve the original block layout after changing the element semantics.
+- **Treatment detail paragraph fields now render admin-authored rich text.**
+  The source template used static paragraph markup. At the user's request, the
+  dynamic version allows bold, italic, highlighted text, lists, links and line
+  breaks in long treatment detail copy. A bannered non-source rich-text block was
+  appended to `design/treatments/treatment.css` so the formatting displays cleanly
+  inside the existing template without rewriting source rules.
+- **Treatment detail pages now output admin-managed SEO metadata.**
+  The source template had static head metadata. Dynamic treatment pages now use
+  admin-authored search, social and schema fields, including server-rendered
+  Open Graph/Twitter tags and JSON-LD for treatment pages.
 
 These are recorded decisions — see the note in §2.1 before reverting any of them.
 
@@ -452,12 +594,14 @@ Nothing else was changed. All copy, colours, imagery and layout are as supplied.
       Inertia's `useForm`. Currently front-end only.
 - [ ] Replace all placeholder content (copy, stats, reviews, phone, email, address, hours).
       Includes the WhatsApp number in `Components/Global/Footer.vue` (`wa.me/919820000000`).
+- [ ] Clinician-review the AI-generated starter treatment detail-page copy seeded by
+      `TreatmentSeeder` before launch.
 - [ ] Replace stock photography and the generated sample videos.
 - [ ] Point the map iframe at the real clinic location.
 - [ ] Add the real Google reviews link on the "Write a review" button (`href="#"` today).
 - [ ] Add legal pages: privacy policy, terms, sitemap (footer links are `href="#"`).
-- [ ] SEO: the home page's meta description is still set in `app.blade.php`; move it to
-      a per-page Inertia `<Head>` like the About page.
+- [ ] SEO: Home/About still use static page-level metadata. Add admin-managed SEO
+      for non-treatment pages if those pages also need CMS control.
 - [ ] Admin modules are only a foundation today. Future modules should be added under
       `resources/js/Pages/Admin/<Module>/`, routed from `routes/admin.php`, and wrapped
       in `AdminShell`.
@@ -475,4 +619,9 @@ added at `/about-us`; global header About Us and Doctors links wired; `npm run b
 passes after the About page conversion; base migrations and admin migration ran;
 initial admin account created via Tinker with a hashed password; Admin login and
 basic dashboard added; `npm run build` and `php artisan test` pass after the
-Admin foundation.
+Admin foundation; Treatment model/migration/admin CRUD/public detail pages added;
+six original homepage treatments seeded to the database with starter detail-page
+content; WYSIWYG rich-text editor and sanitizer added for treatment paragraph
+fields; Admin treatment form split into SEO/Home/Content tabs; `npm run build`
+and `php artisan test` pass after the Treatments module; advanced treatment SEO
+fields, server-rendered SEO tags and JSON-LD added; treatment SEO defaults seeded.

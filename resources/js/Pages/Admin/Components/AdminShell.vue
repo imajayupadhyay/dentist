@@ -1,6 +1,13 @@
 <script setup>
 import Sidebar from './Sidebar.vue';
 import Topbar from './Topbar.vue';
+
+defineProps({
+    title: {
+        type: String,
+        default: 'Dashboard',
+    },
+});
 </script>
 
 <template>
@@ -8,7 +15,7 @@ import Topbar from './Topbar.vue';
         <Sidebar />
 
         <div class="admin-main">
-            <Topbar />
+            <Topbar :title="title" />
             <main class="admin-content">
                 <slot />
             </main>

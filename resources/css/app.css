@@ -36,6 +36,9 @@
 /* ── About page sections ───────────────────────────────────────────────── */
 @import './design/about/about.css';
 
+/* ── Treatment detail page sections ────────────────────────────────────── */
+@import './design/treatments/treatment.css';
+
 /* ── Admin panel ───────────────────────────────────────────────────────── */
 @import './design/admin/admin.css';
 

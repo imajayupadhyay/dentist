@@ -2,6 +2,13 @@
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
+defineProps({
+    title: {
+        type: String,
+        default: 'Dashboard',
+    },
+});
+
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
 
@@ -14,7 +21,7 @@ function logout() {
     <header class="admin-topbar">
         <div>
             <span class="admin-kicker">Secure area</span>
-            <h1>Dashboard</h1>
+            <h1>{{ title }}</h1>
         </div>
 
         <div class="admin-topbar-actions">

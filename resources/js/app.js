@@ -20,6 +20,10 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el);
+
+        window.requestAnimationFrame(() => {
+            document.querySelectorAll('[data-server-seo]').forEach((element) => element.remove());
+        });
     },
 
     progress: {

@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Treatment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -48,6 +50,28 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+
+            'treatmentLinks' => fn () => $this->treatmentLinks(),
         ];
+    }
+
+    /**
+     * @return list<array{label: string, href: string}>
+     */
+    private function treatmentLinks(): array
+    {
+        if (! Schema::hasTable('treatments')) {
+            return [];
+        }
+
+        return Treatment::query()
+            ->active()
+            ->ordered()
+            ->get()
+            ->map(fn (Treatment $treatment): array => [
+                'label' => $treatment->home_title,
+                'href' => "/treatments/{$treatment->slug}",
+            ])
+            ->all();
     }
 }

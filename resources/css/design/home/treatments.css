@@ -46,3 +46,5 @@
   stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease)}
 .tmore:hover svg{transform:translateX(5px)}
 
+/* ── Non-source: dynamic treatment bands are now full-card links. ───────── */
+.tband{display:block}
