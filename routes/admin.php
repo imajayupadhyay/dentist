@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AboutPageController;
 use App\Http\Controllers\Admin\ContactSubmissionController;
 use App\Http\Controllers\Admin\HomePageController;
 use App\Http\Controllers\Admin\TreatmentController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +24,10 @@ Route::prefix('admin')->name('admin.')->group(function (): void {
         Route::put('/about', [AboutPageController::class, 'update'])->name('about.update');
         Route::get('/contacts', [ContactSubmissionController::class, 'index'])->name('contacts.index');
         Route::patch('/contacts/{contactSubmission}', [ContactSubmissionController::class, 'update'])->name('contacts.update');
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::resource('/treatments', TreatmentController::class)->except('show');
         Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
     });

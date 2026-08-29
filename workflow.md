@@ -140,6 +140,8 @@ resources/
             │   └── Form.vue
             ├── Contacts/
             │   └── Index.vue
+            ├── Users/
+            │   └── Index.vue
             ├── Treatments/
             │   ├── Index.vue
             │   └── Form.vue
@@ -243,6 +245,7 @@ Pages/
     ├── Auth/       { Login.vue }
     ├── Dashboard/  { Index.vue }
     ├── Contacts/   { Index.vue }
+    ├── Users/      { Index.vue }
     ├── Treatments/ { Index.vue, Form.vue }
     └── Components/ { AdminShell.vue, Sidebar.vue, Topbar.vue }
 ```
@@ -258,7 +261,7 @@ Page-specific components never mix between pages.
 | File | Role |
 |---|---|
 | `routes/web.php` | `/` → `HomeController`; `POST /contact-submissions` → homepage appointment storage; `/about-us` → `AboutController`; `/treatments/{treatment}` → dynamic treatment detail page |
-| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/home`, `/admin/about`, `/admin/contacts`, `/admin/treatments`, `/admin/logout` |
+| `routes/admin.php` | `/drpushpa-secure-login`, `/admin`, `/admin/dashboard`, `/admin/home`, `/admin/about`, `/admin/contacts`, `/admin/users`, `/admin/treatments`, `/admin/logout` |
 | `app/Http/Controllers/HomeController.php` | Loads singleton `HomePage` content/SEO plus active treatments for the homepage |
 | `app/Http/Controllers/ContactSubmissionController.php` | Stores homepage appointment form submissions in `contact_submissions` |
 | `app/Http/Controllers/AboutController.php` | Loads singleton `AboutPage` content/SEO for the About Us page |
@@ -266,9 +269,12 @@ Page-specific components never mix between pages.
 | `app/Http/Controllers/Admin/HomePageController.php` | Admin singleton editor for homepage SEO and non-treatment/non-review content |
 | `app/Http/Controllers/Admin/AboutPageController.php` | Admin singleton editor for About page SEO and section content |
 | `app/Http/Controllers/Admin/ContactSubmissionController.php` | Admin inbox for viewing homepage appointment requests and updating status/notes |
+| `app/Http/Controllers/Admin/UserController.php` | Admin user management for creating, editing and deleting admin accounts |
 | `app/Http/Controllers/Admin/TreatmentController.php` | Admin CRUD for treatments, including optional public asset image uploads |
 | `app/Http/Controllers/Admin/Auth/LoginController.php` | Admin login/logout, validation, throttling, session regeneration |
 | `app/Http/Requests/ContactSubmissionRequest.php` | Public homepage appointment validation and input cleanup |
+| `app/Http/Requests/Admin/StoreAdminUserRequest.php` | Validates new admin user name, email and password |
+| `app/Http/Requests/Admin/UpdateAdminUserRequest.php` | Validates admin user profile updates and optional password changes |
 | `app/Http/Requests/Admin/HomePageRequest.php` | Admin homepage validation, rich-text sanitizing and repeat-row cleanup |
 | `app/Http/Requests/Admin/AboutPageRequest.php` | Admin About page validation, rich-text sanitizing and repeat-row cleanup |
 | `app/Http/Requests/Admin/TreatmentRequest.php` | Admin treatment validation and repeat-row cleanup |
@@ -291,7 +297,7 @@ Page-specific components never mix between pages.
 | `app/Models/AboutPage.php` | Singleton About page defaults, casts, admin/public serialization and SEO metadata |
 | `app/Models/ContactSubmission.php` | Stored contact/appointment request data, status options and admin serialization |
 | `app/Models/Treatment.php` | Treatment casts, tone map, public/admin serialization helpers, slug route binding |
-| `app/Models/User.php` | Casts `is_admin` to boolean; password remains hashed |
+| `app/Models/User.php` | Casts `is_admin` to boolean, hashes passwords, and allows admin-created verification timestamps |
 | `resources/views/app.blade.php` | Root template (`@inertia`, `@inertiaHead`, `@vite`) |
 
 ### Frontend
@@ -398,6 +404,7 @@ FAQ schema when FAQs exist).
 | Home | `/admin/home` | `Admin/Home/Form.vue` | Singleton homepage editor with SEO and Content tabs; manages hero, about, stories, contact-map and contact-form content |
 | About | `/admin/about` | `Admin/About/Form.vue` | Singleton About page editor with SEO and Content tabs; manages masthead, figures, founder note, values, team and CTA |
 | Contacts | `/admin/contacts` | `Admin/Contacts/Index.vue` | Admin inbox for homepage appointment requests, with status and notes controls |
+| Users | `/admin/users` | `Admin/Users/Index.vue` | Admin account management; create admins, edit name/email/password, delete other admins |
 | Treatments list | `/admin/treatments` | `Admin/Treatments/Index.vue` | Lists treatments with visible/hidden state, public view, edit and delete actions |
 | Treatment create | `/admin/treatments/create` | `Admin/Treatments/Form.vue` | Tabbed editor: SEO, Home and Content; SEO tab has search, crawl, social and schema sections; long detail copy uses `RichTextEditor` |
 | Treatment edit | `/admin/treatments/{slug}/edit` | `Admin/Treatments/Form.vue` | Same tabbed editor as create; supports optional content/social image uploads to `public/assets/treatments/` and WYSIWYG rich text |
@@ -618,6 +625,12 @@ user was hashed before storage; do not record plaintext credentials in this file
     `/admin/contacts`, where `Admin/Contacts/Index.vue` supports status changes and
     internal notes.
 
+25. **Admin users are manageable from the admin panel.**
+    `/admin/users` lists admin accounts and lets an authenticated admin create more
+    admins, edit name/email/password, and delete other admins. The controller forces
+    created/updated users to remain admins, blocks deleting the currently logged-in
+    admin account, and blocks removing the final admin account.
+
 ---
 
 ## 6. Deviations from the source file (and why)
@@ -738,4 +751,5 @@ model/migration/admin editor added for Masthead, Figures, Founder's Note, Values
 Team and CTA; About page SEO made admin-managed; `npm run build` and
 `php artisan test` pass after the About CMS module; homepage appointment form posts
 to the backend, stores `contact_submissions`, and is reviewable at `/admin/contacts`;
-`php artisan test` and `npm run build` pass after the Contacts module.
+`php artisan test` and `npm run build` pass after the Contacts module; Admin Users
+module added at `/admin/users` for creating and managing admin accounts.
